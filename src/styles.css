@@ -736,23 +736,7 @@ input[type='text']:focus {
   padding: 3px 8px;
   border-radius: 12px;
 }
-/* submit button highlight when ready */
-.btn-ready {
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
-  transform: scale(1.04);
-  transition: all 0.2s ease;
-}
-/* normal option */
-.option-tile {
-  background: white;
-  border: 1px solid #ddd;
-}
 
-/* ONLY selected option */
-.option-tile-selected {
-  background: #dbeafe;
-  border: 2px solid #2563eb;
-}
 /* GREEN (selected or correct) */
 .option-green {
   background: #16a34a;
