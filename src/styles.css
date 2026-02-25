@@ -753,3 +753,16 @@ input[type='text']:focus {
   background: #dbeafe;
   border: 2px solid #2563eb;
 }
+/* GREEN (selected or correct) */
+.option-green {
+  background: #16a34a;
+  color: white;
+  border: 2px solid #15803d;
+}
+
+/* RED (wrong answer after submit) */
+.option-red {
+  background: #dc2626;
+  color: white;
+  border: 2px solid #b91c1c;
+}

@@ -166,36 +166,42 @@ const ParticipantLive = () => {
                 <h3 className="question-text">{currentQuestion.text}</h3>
 
                 <div className="options-grid">
-                  {currentQuestion.options.map((opt, idx) => {
-                    const isSelected = selectedOption === idx;
-                    const isSubmitted = submittedOption === idx;
+                {currentQuestion.options.map((opt, idx) => {
+                      const isSelected = selectedOption === idx;
+                      const isSubmitted = submittedOption !== null;
+                      const isCorrect = idx === currentQuestion.correctIndex;
 
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        className={
-                          'option-tile option-tile-clickable ' +
-                          (isSelected ? 'option-tile-selected' : '') +
-                          (isLocked ? ' option-tile-locked' : '') +
-                          (isSubmitted ? ' option-tile-locked' : '')
+                      let optionClass = "option-tile option-tile-clickable ";
+
+                      // BEFORE submit → selected = green
+                      if (!isSubmitted && isSelected) {
+                        optionClass += "option-green ";
+                      }
+
+                      // AFTER submit
+                      if (isSubmitted) {
+                        if (isCorrect) {
+                          optionClass += "option-green ";
+                        } else if (isSelected && !isCorrect) {
+                          optionClass += "option-red ";
                         }
-                        onClick={() => handleSelect(idx)}
-                        disabled={
-                          status !== 'in-progress' ||
-                          remainingSeconds === 0 ||
-                          isLocked ||
-                          submittedOption !== null
-                        }
-                      >
-                        <span className="option-index">
-                          {String.fromCharCode(65 + idx)}
-                        </span>
-                        <span>{opt || <em>Empty option</em>}</span>
-                        {isSubmitted && <span className="badge">Sent</span>}
-                      </button>
-                    );
-                  })}
+                      }
+
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          className={optionClass}
+                          onClick={() => handleSelect(idx)}
+                          disabled={submittedOption !== null}
+                        >
+                          <span className="option-index">
+                            {String.fromCharCode(65 + idx)}
+                          </span>
+                          <span>{opt || <em>Empty option</em>}</span>
+                        </button>
+                      );
+                    })}
                 </div>
 
                 <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center' }}>
