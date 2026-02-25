@@ -761,3 +761,9 @@ input[type='text']:focus {
   border: 2px solid #b91c1c !important;
   color: white !important;
 }
+.option-tile {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #e2e8f0;
+  transition: all 0.2s ease;
+}
