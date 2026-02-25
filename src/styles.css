@@ -736,17 +736,20 @@ input[type='text']:focus {
   padding: 3px 8px;
   border-radius: 12px;
 }
-
-/* GREEN (selected or correct) */
-.option-green {
-  background: #16a34a;
-  color: white;
-  border: 2px solid #15803d;
+/* submit button highlight when ready */
+.btn-ready {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+  transform: scale(1.04);
+  transition: all 0.2s ease;
+}
+/* normal option */
+.option-tile {
+  background: white;
+  border: 1px solid #ddd;
 }
 
-/* RED (wrong answer after submit) */
-.option-red {
-  background: #dc2626;
-  color: white;
-  border: 2px solid #b91c1c;
+/* ONLY selected option */
+.option-tile-selected {
+  background: #dbeafe;
+  border: 2px solid #2563eb;
 }
