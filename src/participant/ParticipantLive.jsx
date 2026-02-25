@@ -12,6 +12,7 @@ const ParticipantLive = () => {
   const [participants, setParticipants] = useState([]);
   const [status, setStatus] = useState('lobby');
   const [currentIndex, setCurrentIndex] = useState(-1);
+  const [remainingSeconds, setRemainingSeconds] = useState(null);
   const [selectedOption, setSelectedOption] = useState(null);
   const [submittedOption, setSubmittedOption] = useState(null);
 
@@ -53,21 +54,51 @@ const ParticipantLive = () => {
     }
   };
 
+  useEffect(() => {
+    if (!quiz || quiz.currentQuestionIndex < 0 || !quiz.currentQuestionEndsAt) {
+      setRemainingSeconds(null);
+      return;
+    }
+
+    const update = () => {
+      const diffMs = quiz.currentQuestionEndsAt - Date.now();
+      const seconds = Math.max(0, Math.ceil(diffMs / 1000));
+      setRemainingSeconds(seconds);
+    };
+
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [quiz]);
+
   const currentQuestion =
     quiz && currentIndex >= 0 && currentIndex < quiz.questions.length
       ? quiz.questions[currentIndex]
       : null;
 
-  const handleAnswer = (idx) => {
-    if (!currentQuestion || status !== 'in-progress') return;
+  const handleSelect = (idx) => {
+    if (!currentQuestion || status !== 'in-progress' || remainingSeconds === 0) return;
     setSelectedOption(idx);
+  };
+
+  const handleSubmit = () => {
+    if (
+      !currentQuestion ||
+      status !== 'in-progress' ||
+      remainingSeconds === 0 ||
+      selectedOption === null ||
+      submittedOption !== null
+    ) {
+      return;
+    }
+
     socket.emit('participant:answer', {
       quizId,
       participantId,
       questionId: currentQuestion.id,
-      optionIndex: idx
+      optionIndex: selectedOption
     });
-    setSubmittedOption(idx);
+    setSubmittedOption(selectedOption);
   };
 
   return (
@@ -94,6 +125,18 @@ const ParticipantLive = () => {
                   <span>
                     Question {currentIndex + 1} of {quiz.questions.length}
                   </span>
+                  {typeof remainingSeconds === 'number' && (
+                    <span
+                      className={
+                        'timer-pill ' +
+                        (remainingSeconds === 0 ? 'timer-pill-expired' : '')
+                      }
+                    >
+                      {remainingSeconds === 0
+                        ? 'Time up'
+                        : `Time left: ${remainingSeconds}s`}
+                    </span>
+                  )}
                 </div>
                 <h3 className="question-text">{currentQuestion.text}</h3>
                 <div className="options-grid">
@@ -112,8 +155,8 @@ const ParticipantLive = () => {
                             ? ' option-tile-correct'
                             : '')
                         }
-                        onClick={() => handleAnswer(idx)}
-                        disabled={status !== 'in-progress'}
+                        onClick={() => handleSelect(idx)}
+                        disabled={status !== 'in-progress' || remainingSeconds === 0}
                       >
                         <span className="option-index">{String.fromCharCode(65 + idx)}</span>
                         <span>{opt || <em>Empty option</em>}</span>
@@ -121,6 +164,27 @@ const ParticipantLive = () => {
                       </button>
                     );
                   })}
+                </div>
+                <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center' }}>
+                  <span className="muted" style={{ fontSize: '0.8rem' }}>
+                    {selectedOption === null
+                      ? 'Select an option, then submit.'
+                      : `Selected: ${String.fromCharCode(65 + selectedOption)}`}
+                  </span>
+                  <div className="spacer" />
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleSubmit}
+                    disabled={
+                      status !== 'in-progress' ||
+                      remainingSeconds === 0 ||
+                      selectedOption === null ||
+                      submittedOption !== null
+                    }
+                  >
+                    {submittedOption === null ? 'Submit answer' : 'Submitted'}
+                  </button>
                 </div>
               </div>
             )}

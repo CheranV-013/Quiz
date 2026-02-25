@@ -110,7 +110,7 @@ const HostLobby = () => {
                 )}
               </div>
               <p className="muted" style={{ fontSize: '0.75rem', margin: '0 0 0.25rem' }}>
-                Tap one option to mark it as the correct answer.
+                Type your options below, then pick the correct answer from the dropdown.
               </p>
               <input
                 type="text"
@@ -120,14 +120,12 @@ const HostLobby = () => {
               />
               <div className="options-grid">
                 {q.options.map((opt, oi) => (
-                  <button
+                  <div
                     key={oi}
-                    type="button"
                     className={
                       'option-pill ' +
                       (oi === q.correctIndex ? 'option-pill-correct' : '')
                     }
-                    onClick={() => updateQuestion(qi, { correctIndex: oi })}
                   >
                     <span className="option-index">{String.fromCharCode(65 + oi)}</span>
                     <input
@@ -136,8 +134,26 @@ const HostLobby = () => {
                       onChange={(e) => updateOption(qi, oi, e.target.value)}
                       placeholder={`Option ${oi + 1}`}
                     />
-                  </button>
+                  </div>
                 ))}
+              </div>
+              <div className="correct-answer-row">
+                <span className="muted" style={{ fontSize: '0.8rem' }}>
+                  Correct answer
+                </span>
+                <select
+                  className="correct-select"
+                  value={q.correctIndex}
+                  onChange={(e) =>
+                    updateQuestion(qi, { correctIndex: Number(e.target.value) })
+                  }
+                >
+                  {q.options.map((_, oi) => (
+                    <option key={oi} value={oi}>
+                      {String.fromCharCode(65 + oi)}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           ))}

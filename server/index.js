@@ -15,7 +15,7 @@ const io = new Server(server, {
   }
 });
 
-const quizzes = new Map(); // quizId -> { id, code, title, questions, status, currentQuestionIndex }
+const quizzes = new Map(); // quizId -> { id, code, title, questions, status, currentQuestionIndex, currentQuestionEndsAt }
 const quizParticipants = new Map(); // quizId -> Map<socketIdOrId, participant>
 
 const generateQuizCode = () => {
@@ -52,7 +52,8 @@ io.on('connection', (socket) => {
         id: q.id || randomUUID()
       })),
       status: 'lobby',
-      currentQuestionIndex: -1
+      currentQuestionIndex: -1,
+      currentQuestionEndsAt: null
     };
 
     quizzes.set(quizId, quiz);
@@ -79,8 +80,10 @@ io.on('connection', (socket) => {
     if (quiz.status !== 'lobby') return;
     if (quiz.questions.length === 0) return;
 
+    const now = Date.now();
     quiz.status = 'in-progress';
     quiz.currentQuestionIndex = 0;
+    quiz.currentQuestionEndsAt = now + 45_000;
     quizzes.set(quizId, quiz);
 
     io.to(quizId).emit('quiz:state', createQuizStatePayload(quizId));
@@ -91,7 +94,9 @@ io.on('connection', (socket) => {
     if (!quiz || quiz.status !== 'in-progress') return;
     if (quiz.currentQuestionIndex >= quiz.questions.length - 1) return;
 
+    const now = Date.now();
     quiz.currentQuestionIndex += 1;
+    quiz.currentQuestionEndsAt = now + 45_000;
     quizzes.set(quizId, quiz);
     io.to(quizId).emit('quiz:state', createQuizStatePayload(quizId));
   });
@@ -101,7 +106,9 @@ io.on('connection', (socket) => {
     if (!quiz || quiz.status !== 'in-progress') return;
     if (quiz.currentQuestionIndex <= 0) return;
 
+    const now = Date.now();
     quiz.currentQuestionIndex -= 1;
+    quiz.currentQuestionEndsAt = now + 45_000;
     quizzes.set(quizId, quiz);
     io.to(quizId).emit('quiz:state', createQuizStatePayload(quizId));
   });
@@ -110,6 +117,7 @@ io.on('connection', (socket) => {
     const quiz = quizzes.get(quizId);
     if (!quiz) return;
     quiz.status = 'finished';
+    quiz.currentQuestionEndsAt = null;
     quizzes.set(quizId, quiz);
     io.to(quizId).emit('quiz:state', createQuizStatePayload(quizId));
   });
@@ -164,6 +172,12 @@ io.on('connection', (socket) => {
   socket.on('participant:answer', ({ quizId, participantId, questionId, optionIndex }) => {
     const quiz = quizzes.get(quizId);
     if (!quiz || quiz.status !== 'in-progress') return;
+
+    const now = Date.now();
+    if (quiz.currentQuestionEndsAt && now > quiz.currentQuestionEndsAt) {
+      // Too late for this question.
+      return;
+    }
 
     const pMap = quizParticipants.get(quizId);
     const participant = pMap?.get(participantId);

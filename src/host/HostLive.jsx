@@ -13,6 +13,7 @@ const HostLive = () => {
   const [participants, setParticipants] = useState([]);
   const [status, setStatus] = useState('lobby'); // lobby | in-progress | finished
   const [currentIndex, setCurrentIndex] = useState(-1);
+  const [remainingSeconds, setRemainingSeconds] = useState(null);
 
   const quizCode = location.state?.quizCode || quiz?.code;
 
@@ -44,6 +45,23 @@ const HostLive = () => {
     setStatus(state.quiz.status);
     setCurrentIndex(state.quiz.currentQuestionIndex);
   };
+
+  useEffect(() => {
+    if (!quiz || quiz.currentQuestionIndex < 0 || !quiz.currentQuestionEndsAt) {
+      setRemainingSeconds(null);
+      return;
+    }
+
+    const update = () => {
+      const diffMs = quiz.currentQuestionEndsAt - Date.now();
+      const seconds = Math.max(0, Math.ceil(diffMs / 1000));
+      setRemainingSeconds(seconds);
+    };
+
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [quiz]);
 
   const startQuiz = () => {
     socket.emit('host:startQuiz', { quizId });
@@ -102,6 +120,18 @@ const HostLive = () => {
                   <span>
                     Question {currentIndex + 1} of {quiz.questions.length}
                   </span>
+                  {typeof remainingSeconds === 'number' && (
+                    <span
+                      className={
+                        'timer-pill ' +
+                        (remainingSeconds === 0 ? 'timer-pill-expired' : '')
+                      }
+                    >
+                      {remainingSeconds === 0
+                        ? 'Time up'
+                        : `Time left: ${remainingSeconds}s`}
+                    </span>
+                  )}
                 </div>
                 <h3 className="question-text">{currentQuestion.text}</h3>
                 <div className="options-grid options-grid-static">
