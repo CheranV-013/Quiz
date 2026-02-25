@@ -13,8 +13,10 @@ const ParticipantLive = () => {
   const [status, setStatus] = useState('lobby');
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [remainingSeconds, setRemainingSeconds] = useState(null);
+
   const [selectedOption, setSelectedOption] = useState(null);
   const [submittedOption, setSubmittedOption] = useState(null);
+  const [isLocked, setIsLocked] = useState(false);
 
   useEffect(() => {
     if (!socket || !quizId || !participantId) return;
@@ -46,14 +48,18 @@ const ParticipantLive = () => {
     setQuiz(state.quiz);
     setParticipants(state.participants || []);
     setStatus(state.quiz.status);
+
     const newIndex = state.quiz.currentQuestionIndex;
+
     if (newIndex !== currentIndex) {
       setCurrentIndex(newIndex);
       setSelectedOption(null);
       setSubmittedOption(null);
+      setIsLocked(false);
     }
   };
 
+  // TIMER
   useEffect(() => {
     if (!quiz || quiz.currentQuestionIndex < 0 || !quiz.currentQuestionEndsAt) {
       setRemainingSeconds(null);
@@ -72,22 +78,29 @@ const ParticipantLive = () => {
   }, [quiz]);
 
   const currentQuestion =
-    quiz && currentIndex >= 0 && currentIndex < quiz.questions.length
+    quiz &&
+    currentIndex >= 0 &&
+    currentIndex < quiz.questions.length
       ? quiz.questions[currentIndex]
       : null;
 
+  // SELECT OPTION (LOCK AFTER SELECT)
   const handleSelect = (idx) => {
     if (
       !currentQuestion ||
       status !== 'in-progress' ||
       remainingSeconds === 0 ||
-      submittedOption !== null
+      submittedOption !== null ||
+      isLocked
     ) {
       return;
     }
+
     setSelectedOption(idx);
+    setIsLocked(true);
   };
 
+  // SUBMIT ANSWER
   const handleSubmit = () => {
     if (
       !currentQuestion ||
@@ -105,6 +118,7 @@ const ParticipantLive = () => {
       questionId: currentQuestion.id,
       optionIndex: selectedOption
     });
+
     setSubmittedOption(selectedOption);
   };
 
@@ -120,18 +134,21 @@ const ParticipantLive = () => {
               {status === 'finished' && 'Quiz finished. See the final leaderboard.'}
             </p>
           </div>
+
           <div className="panel-body">
             {status === 'lobby' && (
               <div className="empty-state">
                 <p>Hang tight, the host will start the quiz soon.</p>
               </div>
             )}
+
             {status === 'in-progress' && currentQuestion && (
               <div className="question-live">
                 <div className="question-meta">
                   <span>
                     Question {currentIndex + 1} of {quiz.questions.length}
                   </span>
+
                   {typeof remainingSeconds === 'number' && (
                     <span
                       className={
@@ -145,11 +162,14 @@ const ParticipantLive = () => {
                     </span>
                   )}
                 </div>
+
                 <h3 className="question-text">{currentQuestion.text}</h3>
+
                 <div className="options-grid">
                   {currentQuestion.options.map((opt, idx) => {
                     const isSelected = selectedOption === idx;
                     const isSubmitted = submittedOption === idx;
+
                     return (
                       <button
                         key={idx}
@@ -157,33 +177,36 @@ const ParticipantLive = () => {
                         className={
                           'option-tile option-tile-clickable ' +
                           (isSelected ? 'option-tile-selected' : '') +
-                          (isSubmitted ? ' option-tile-locked' : '') +
-                          (status === 'finished' &&
-                          idx === currentQuestion.correctIndex
-                            ? ' option-tile-correct'
-                            : '')
+                          (isLocked ? ' option-tile-locked' : '') +
+                          (isSubmitted ? ' option-tile-locked' : '')
                         }
                         onClick={() => handleSelect(idx)}
                         disabled={
                           status !== 'in-progress' ||
                           remainingSeconds === 0 ||
+                          isLocked ||
                           submittedOption !== null
                         }
                       >
-                        <span className="option-index">{String.fromCharCode(65 + idx)}</span>
+                        <span className="option-index">
+                          {String.fromCharCode(65 + idx)}
+                        </span>
                         <span>{opt || <em>Empty option</em>}</span>
                         {isSubmitted && <span className="badge">Sent</span>}
                       </button>
                     );
                   })}
                 </div>
+
                 <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center' }}>
                   <span className="muted" style={{ fontSize: '0.8rem' }}>
                     {selectedOption === null
                       ? 'Select an option, then submit.'
                       : `Selected: ${String.fromCharCode(65 + selectedOption)}`}
                   </span>
+
                   <div className="spacer" />
+
                   <button
                     type="button"
                     className="btn btn-primary"
@@ -200,6 +223,7 @@ const ParticipantLive = () => {
                 </div>
               </div>
             )}
+
             {status === 'finished' && (
               <div className="empty-state">
                 <p>The quiz is over. Check how you did on the leaderboard.</p>
@@ -208,6 +232,7 @@ const ParticipantLive = () => {
           </div>
         </div>
       </section>
+
       <aside className="participant-sidebar">
         <div className="panel">
           <div className="panel-header">
@@ -223,4 +248,3 @@ const ParticipantLive = () => {
 };
 
 export default ParticipantLive;
-
