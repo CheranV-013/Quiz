@@ -109,6 +109,9 @@ const HostLobby = () => {
                   </button>
                 )}
               </div>
+              <p className="muted" style={{ fontSize: '0.75rem', margin: '0 0 0.25rem' }}>
+                Tap one option to mark it as the correct answer.
+              </p>
               <input
                 type="text"
                 value={q.text}
@@ -146,7 +149,7 @@ const HostLobby = () => {
           </button>
           <div className="spacer" />
           <button type="submit" className="btn btn-primary" disabled={isCreating || !socket}>
-            {isCreating ? 'Creating…' : 'Create & amp; go live'}
+            {isCreating ? 'Creating…' : 'Create & go live'}
           </button>
         </div>
         {error && <div className="error-banner">{error}</div>}

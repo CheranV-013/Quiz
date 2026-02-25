@@ -1,7 +1,8 @@
-import express from 'express';
-import http from 'http';
-import { Server } from 'socket.io';
-import cors from 'cors';
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const cors = require('cors');
+const { randomUUID } = require('crypto');
 
 const app = express();
 app.use(cors());
@@ -38,7 +39,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('host:createQuiz', (payload, cb) => {
-    const quizId = crypto.randomUUID();
+    const quizId = randomUUID();
     const code = generateQuizCode();
 
     const quiz = {
@@ -48,7 +49,7 @@ io.on('connection', (socket) => {
       questions: payload.questions.map((q) => ({
         ...q,
         // Ensure we have an id for each question
-        id: q.id || crypto.randomUUID()
+        id: q.id || randomUUID()
       })),
       status: 'lobby',
       currentQuestionIndex: -1
@@ -123,7 +124,7 @@ io.on('connection', (socket) => {
     }
 
     const quizId = entry.id;
-    const pid = crypto.randomUUID();
+    const pid = randomUUID();
     const participant = {
       id: pid,
       socketId: socket.id,
