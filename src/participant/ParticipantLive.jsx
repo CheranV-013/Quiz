@@ -16,8 +16,8 @@ const ParticipantLive = () => {
 
   const [selectedOption, setSelectedOption] = useState(null);
   const [submittedOption, setSubmittedOption] = useState(null);
-  const [isLocked, setIsLocked] = useState(false);
 
+  // ---------------- SOCKET CONNECTION ----------------
   useEffect(() => {
     if (!socket || !quizId || !participantId) return;
 
@@ -44,6 +44,7 @@ const ParticipantLive = () => {
     };
   }, [socket, quizId, participantId, navigate]);
 
+  // ---------------- APPLY SERVER STATE ----------------
   const applyState = (state) => {
     setQuiz(state.quiz);
     setParticipants(state.participants || []);
@@ -51,15 +52,15 @@ const ParticipantLive = () => {
 
     const newIndex = state.quiz.currentQuestionIndex;
 
+    // Reset ONLY when question changes
     if (newIndex !== currentIndex) {
       setCurrentIndex(newIndex);
       setSelectedOption(null);
       setSubmittedOption(null);
-      setIsLocked(false);
     }
   };
 
-  // TIMER
+  // ---------------- TIMER ----------------
   useEffect(() => {
     if (!quiz || quiz.currentQuestionIndex < 0 || !quiz.currentQuestionEndsAt) {
       setRemainingSeconds(null);
@@ -84,23 +85,21 @@ const ParticipantLive = () => {
       ? quiz.questions[currentIndex]
       : null;
 
-  // SELECT OPTION (LOCK AFTER SELECT)
+  // ---------------- SELECT OPTION ----------------
   const handleSelect = (idx) => {
     if (
       !currentQuestion ||
       status !== 'in-progress' ||
       remainingSeconds === 0 ||
-      submittedOption !== null ||
-      isLocked
+      submittedOption !== null
     ) {
       return;
     }
 
     setSelectedOption(idx);
-    setIsLocked(true);
   };
 
-  // SUBMIT ANSWER
+  // ---------------- SUBMIT ANSWER ----------------
   const handleSubmit = () => {
     if (
       !currentQuestion ||
@@ -166,45 +165,47 @@ const ParticipantLive = () => {
                 <h3 className="question-text">{currentQuestion.text}</h3>
 
                 <div className="options-grid">
-                {currentQuestion.options.map((opt, idx) => {
-                      const isSelected = selectedOption === idx;
-                      const isSubmitted = submittedOption !== null;
-                      const isCorrect = idx === currentQuestion.correctIndex;
+                  {currentQuestion.options.map((opt, idx) => {
+                    const isSelected = selectedOption === idx;
+                    const isSubmitted = submittedOption !== null;
 
-                      let optionClass = "option-tile option-tile-clickable ";
+                    let optionClass =
+                      "option-tile option-tile-clickable ";
 
-                      // BEFORE submit → selected = green
-                      if (!isSubmitted && isSelected) {
-                        optionClass += "option-green ";
-                      }
+                    // Before submit → selected = green
+                    if (!isSubmitted && isSelected) {
+                      optionClass += "option-green ";
+                    }
 
-                      // AFTER submit
-                      if (isSubmitted) {
-                        if (isCorrect) {
-                          optionClass += "option-green ";
-                        } else if (isSelected && !isCorrect) {
-                          optionClass += "option-red ";
-                        }
-                      }
+                    // After submit → keep selected green
+                    if (isSubmitted && isSelected) {
+                      optionClass += "option-green ";
+                    }
 
-                      return (
-                        <button
-                          key={idx}
-                          type="button"
-                          className={optionClass}
-                          onClick={() => handleSelect(idx)}
-                          disabled={submittedOption !== null}
-                        >
-                          <span className="option-index">
-                            {String.fromCharCode(65 + idx)}
-                          </span>
-                          <span>{opt || <em>Empty option</em>}</span>
-                        </button>
-                      );
-                    })}
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        className={optionClass}
+                        onClick={() => handleSelect(idx)}
+                        disabled={submittedOption !== null}
+                      >
+                        <span className="option-index">
+                          {String.fromCharCode(65 + idx)}
+                        </span>
+                        <span>{opt || <em>Empty option</em>}</span>
+                      </button>
+                    );
+                  })}
                 </div>
 
-                <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center' }}>
+                <div
+                  style={{
+                    marginTop: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                >
                   <span className="muted" style={{ fontSize: '0.8rem' }}>
                     {selectedOption === null
                       ? 'Select an option, then submit.'
@@ -214,18 +215,20 @@ const ParticipantLive = () => {
                   <div className="spacer" />
 
                   <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={handleSubmit}
-                      disabled={
-                        status !== 'in-progress' ||
-                        remainingSeconds === 0 ||
-                        selectedOption === null ||
-                        submittedOption !== null
-                      }
-                    >
-                      {submittedOption === null ? "Submit answer" : "Submitted ✔"}
-                    </button>
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleSubmit}
+                    disabled={
+                      status !== 'in-progress' ||
+                      remainingSeconds === 0 ||
+                      selectedOption === null ||
+                      submittedOption !== null
+                    }
+                  >
+                    {submittedOption === null
+                      ? "Submit answer"
+                      : "Submitted ✔"}
+                  </button>
                 </div>
               </div>
             )}
@@ -245,7 +248,10 @@ const ParticipantLive = () => {
             <h3>Live leaderboard</h3>
           </div>
           <div className="panel-body">
-            <Leaderboard participants={participants} highlightId={participantId} />
+            <Leaderboard
+              participants={participants}
+              highlightId={participantId}
+            />
           </div>
         </div>
       </aside>
