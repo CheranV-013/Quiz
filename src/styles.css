@@ -747,18 +747,6 @@ input[type='text']:focus {
 }
 
 
-/* Default option (dark theme) */
-.option-tile {
-  background: #1e293b;
-  border: 1px solid #334155;
-  color: #e2e8f0;
-  transition: all 0.2s ease;
-}
-
-/* Hover */
-.option-tile:hover {
-  background: #334155;
-}
 
 /* Selected before submit */
 .option-green {
