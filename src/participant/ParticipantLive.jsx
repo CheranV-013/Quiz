@@ -77,7 +77,14 @@ const ParticipantLive = () => {
       : null;
 
   const handleSelect = (idx) => {
-    if (!currentQuestion || status !== 'in-progress' || remainingSeconds === 0) return;
+    if (
+      !currentQuestion ||
+      status !== 'in-progress' ||
+      remainingSeconds === 0 ||
+      submittedOption !== null
+    ) {
+      return;
+    }
     setSelectedOption(idx);
   };
 
@@ -150,13 +157,18 @@ const ParticipantLive = () => {
                         className={
                           'option-tile option-tile-clickable ' +
                           (isSelected ? 'option-tile-selected' : '') +
+                          (isSubmitted ? ' option-tile-locked' : '') +
                           (status === 'finished' &&
                           idx === currentQuestion.correctIndex
                             ? ' option-tile-correct'
                             : '')
                         }
                         onClick={() => handleSelect(idx)}
-                        disabled={status !== 'in-progress' || remainingSeconds === 0}
+                        disabled={
+                          status !== 'in-progress' ||
+                          remainingSeconds === 0 ||
+                          submittedOption !== null
+                        }
                       >
                         <span className="option-index">{String.fromCharCode(65 + idx)}</span>
                         <span>{opt || <em>Empty option</em>}</span>
