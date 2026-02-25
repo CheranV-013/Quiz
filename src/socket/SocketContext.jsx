@@ -7,13 +7,11 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    // Use explicit backend URL, overridable via VITE_API_URL.
-    const socketUrl =
-      import.meta.env.VITE_API_URL || 'https://quiz-2-lcqa.onrender.com';
+    const socketUrl = "https://quiz-2-lcqa.onrender.com"; // FORCE backend URL
 
     const s = io(socketUrl, {
-      path: '/socket.io',
-      transports: ['websocket', 'polling']
+      transports: ["websocket"],   // IMPORTANT
+      withCredentials: true
     });
 
     setSocket(s);
@@ -30,10 +28,6 @@ export const SocketProvider = ({ children }) => {
 
 export const useSocket = () => {
   const ctx = useContext(SocketContext);
-  if (!ctx) {
-    throw new Error('useSocket must be used within SocketProvider');
-  }
+  if (!ctx) throw new Error("useSocket must be used within SocketProvider");
   return ctx.socket;
 };
-
-
