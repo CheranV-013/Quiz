@@ -7,9 +7,9 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    // If VITE_SOCKET_URL is set, connect to that URL (useful for production),
-    // otherwise connect to the same origin and let Vite proxy /socket.io -> :4000 in dev.
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || undefined;
+    // Use explicit backend URL, overridable via VITE_API_URL.
+    const socketUrl =
+      import.meta.env.VITE_API_URL || 'https://quiz-2-lcqa.onrender.com';
 
     const s = io(socketUrl, {
       path: '/socket.io',
