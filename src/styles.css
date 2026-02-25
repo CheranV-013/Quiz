@@ -714,3 +714,31 @@ input[type='text']:focus {
   }
 }
 
+/* Selected option */
+.option-tile-selected {
+  border: 2px solid #2563eb;
+  background: #dbeafe;
+  transform: scale(1.02);
+}
+
+/* Locked after selection */
+.option-tile-locked {
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+
+/* Submitted badge */
+.badge {
+  margin-left: auto;
+  background: #16a34a;
+  color: white;
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+/* submit button highlight when ready */
+.btn-ready {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+  transform: scale(1.04);
+  transition: all 0.2s ease;
+}

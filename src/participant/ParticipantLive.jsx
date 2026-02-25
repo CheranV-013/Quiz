@@ -208,18 +208,23 @@ const ParticipantLive = () => {
                   <div className="spacer" />
 
                   <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={handleSubmit}
-                    disabled={
-                      status !== 'in-progress' ||
-                      remainingSeconds === 0 ||
-                      selectedOption === null ||
-                      submittedOption !== null
-                    }
-                  >
-                    {submittedOption === null ? 'Submit answer' : 'Submitted'}
-                  </button>
+  type="button"
+  className={
+    "btn btn-primary " +
+    (selectedOption !== null && submittedOption === null
+      ? "btn-ready"
+      : "")
+  }
+  onClick={handleSubmit}
+  disabled={
+    status !== 'in-progress' ||
+    remainingSeconds === 0 ||
+    selectedOption === null ||
+    submittedOption !== null
+  }
+>
+  {submittedOption === null ? "Submit answer" : "Submitted ✔"}
+</button>
                 </div>
               </div>
             )}
