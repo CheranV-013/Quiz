@@ -742,3 +742,14 @@ input[type='text']:focus {
   transform: scale(1.04);
   transition: all 0.2s ease;
 }
+/* normal option */
+.option-tile {
+  background: white;
+  border: 1px solid #ddd;
+}
+
+/* ONLY selected option */
+.option-tile-selected {
+  background: #dbeafe;
+  border: 2px solid #2563eb;
+}
