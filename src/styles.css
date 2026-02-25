@@ -714,6 +714,9 @@ input[type='text']:focus {
   }
 }
 
+
+
+
 /* Selected option */
 .option-tile-selected {
   border: 2px solid #2563eb;
@@ -742,14 +745,31 @@ input[type='text']:focus {
   transform: scale(1.04);
   transition: all 0.2s ease;
 }
-/* normal option */
+
+
+/* Default option (dark theme) */
 .option-tile {
-  background: white;
-  border: 1px solid #ddd;
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #e2e8f0;
+  transition: all 0.2s ease;
 }
 
-/* ONLY selected option */
-.option-tile-selected {
-  background: #dbeafe;
-  border: 2px solid #2563eb;
+/* Hover */
+.option-tile:hover {
+  background: #334155;
+}
+
+/* Selected before submit */
+.option-green {
+  background: #16a34a !important;
+  border: 2px solid #15803d !important;
+  color: white !important;
+}
+
+/* Wrong after submit */
+.option-red {
+  background: #dc2626 !important;
+  border: 2px solid #b91c1c !important;
+  color: white !important;
 }
