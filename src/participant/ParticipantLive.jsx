@@ -165,38 +165,39 @@ const ParticipantLive = () => {
                 <h3 className="question-text">{currentQuestion.text}</h3>
 
                 <div className="options-grid">
-                  {currentQuestion.options.map((opt, idx) => {
-                    const isSelected = selectedOption === idx;
-                    const isSubmitted = submittedOption !== null;
+                {currentQuestion.options.map((opt, idx) => {
+  const isSelected = selectedOption === idx;
+  const isSubmitted = submittedOption !== null;
 
-                    let optionClass =
-                      "option-tile option-tile-clickable ";
+  let optionClass = "option-tile option-tile-clickable ";
 
-                    // Before submit → selected = green
-                    if (!isSubmitted && isSelected) {
-                      optionClass += "option-green ";
-                    }
+  // BEFORE submit → selected = green
+  if (!isSubmitted && isSelected) {
+    optionClass += "option-green ";
+  }
 
-                    // After submit → keep selected green
-                    if (isSubmitted && isSelected) {
-                      optionClass += "option-green ";
-                    }
+  // AFTER submit → KEEP SAME OPTION GREEN (STATIC)
+  if (isSubmitted && idx === submittedOption) {
+    optionClass += "option-green ";
+  }
 
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        className={optionClass}
-                        onClick={() => handleSelect(idx)}
-                        disabled={submittedOption !== null}
-                      >
-                        <span className="option-index">
-                          {String.fromCharCode(65 + idx)}
-                        </span>
-                        <span>{opt || <em>Empty option</em>}</span>
-                      </button>
-                    );
-                  })}
+  return (
+    <button
+      key={idx}
+      type="button"
+      className={optionClass}
+      onClick={() => handleSelect(idx)}
+      disabled={submittedOption !== null}
+    >
+      <span className="option-index">
+        {String.fromCharCode(65 + idx)}
+      </span>
+      <span className="option-text">
+        {opt || <em>Empty option</em>}
+      </span>
+    </button>
+  );
+})}
                 </div>
 
                 <div
