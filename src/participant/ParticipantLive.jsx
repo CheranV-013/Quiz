@@ -215,11 +215,7 @@ const ParticipantLive = () => {
 
                   <button
                       type="button"
-                      className={
-                        "option-tile option-tile-clickable " +
-                        (isSelected ? "option-tile-selected " : "") +
-                        (isSubmitted ? "option-tile-locked " : "")
-                      }
+                      className="btn btn-primary"
                       onClick={handleSubmit}
                       disabled={
                         status !== 'in-progress' ||
