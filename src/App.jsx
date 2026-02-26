@@ -47,7 +47,8 @@ const Landing = () => {
   
       {/* LEFT SIDE */}
       <div className="landing-left">
-        <h1>ROUND 1 OF TECH FUSION QUIZ</h1>
+        <h1>ROUND 1</h1>
+        <h2>TECH FUSION QUIZ</h2>
         <p>
           Department of<br/>
           Artificial Intelligence and Machine Learning
