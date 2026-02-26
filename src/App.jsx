@@ -51,7 +51,7 @@ const Landing = () => {
         <h2>TECH FUSION QUIZ</h2>
         <p>
           Department of<br/>
-          Artificial Intelligence and Machine Learning
+          Artificial Intelligence and Machine Learning<br/>
         </p>
         <div className="landing-actions">
           <button className="btn btn-primary" onClick={() => navigate('/host')}>
