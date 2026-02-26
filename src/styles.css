@@ -894,26 +894,28 @@ input[type='text']:focus {
   }
 }
 
-/* ================= ANIMATED BACKGROUND ================= */
+
+/* ================= DARK CLEAN ANIMATED BACKGROUND ================= */
 
 body {
   margin: 0;
   min-height: 100vh;
 
+  /* clean dark gradient */
   background: linear-gradient(
-    -45deg,
-    #020617,
-    #06122b,
-    #0b1f45,
-    #020617
+    135deg,
+    #020617 0%,
+    #061127 40%,
+    #081a36 70%,
+    #020617 100%
   );
 
-  background-size: 400% 400%;
-  animation: gradientMove 14s ease infinite;
+  background-size: 300% 300%;
+  animation: darkFlow 18s ease infinite;
 }
 
-/* smooth slow movement */
-@keyframes gradientMove {
+/* slow smooth movement */
+@keyframes darkFlow {
   0% {
     background-position: 0% 50%;
   }
@@ -923,4 +925,19 @@ body {
   100% {
     background-position: 0% 50%;
   }
+}
+
+/* subtle soft glow */
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    circle at 20% 20%,
+    rgba(0, 120, 255, 0.08),
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: -1;
 }
