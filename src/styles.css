@@ -231,9 +231,9 @@ button {
 
 .panel {
   border-radius: 1rem;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.8);
+  background: rgba(22, 22, 22, 0.95);   /* dark gray */
+  border: 1px solid rgba(70, 70, 70, 0.5);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.65);
   overflow: hidden;
   display: flex;
   flex-direction: column;
