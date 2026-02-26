@@ -144,45 +144,38 @@ button {
   background: rgba(15, 23, 42, 0.85);
 }
 
+
+
+/* ===== LANDING IMAGE FIX ===== */
+
 .landing {
-  display: flex;
-  flex-direction: column; /* IMAGE TOP, CONTENT BELOW */
-  gap: 2rem;
+  display: flex !important;
+  flex-direction: column;
   align-items: center;
   text-align: center;
 }
 
-.landing-left h1 {
-  font-size: clamp(2.4rem, 3.3vw, 3rem);
-  margin: 0 0 0.75rem;
-}
-
-.landing-left p {
-  margin: 0 0 1.5rem;
-  color: #e5e7eb;
-  max-width: 32rem;
-}
-
-.landing-actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
+/* image container */
 .landing-right {
-  display: flex;
-  justify-content: flex-end;
-  order: -1; /* move image above content */
-  justify-content: center;
+  order: -1;
   width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
+/* MAIN FIX → control image size */
 .landing-image {
   width: 100%;
-  max-width: 650px;
+  max-width: 500px;   /* 🔥 reduce size */
   height: auto;
-  border-radius: 16px;
-  display: block;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+/* content spacing */
+.landing-left {
+  margin-top: 20px;
+  max-width: 700px;
 }
 
 
