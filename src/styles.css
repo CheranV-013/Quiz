@@ -895,60 +895,53 @@ input[type='text']:focus {
 }
 
 
-/* ================= LIVE DARK GREY GLOW BACKGROUND ================= */
+/* ================= LIVE DARK GREY GLOW ================= */
 
 body {
   margin: 0;
   min-height: 100vh;
   overflow-x: hidden;
-
   background: #050505;
   position: relative;
 }
 
-/* moving glow layer */
+/* glowing layer */
 body::before,
 body::after {
   content: "";
   position: fixed;
-  width: 600px;
-  height: 600px;
+  width: 500px;
+  height: 500px;
   border-radius: 50%;
-  filter: blur(140px);
-  z-index: -1;
+  z-index: 0;   /* IMPORTANT */
+  pointer-events: none;
 }
 
-/* first grey glow */
+/* first glow */
 body::before {
-  background: rgba(180, 180, 180, 0.15);
-  top: -120px;
-  left: -120px;
-  animation: glowMove1 16s ease-in-out infinite;
+  background: rgba(180, 180, 180, 0.25);
+  filter: blur(120px);
+  top: -100px;
+  left: -100px;
+  animation: glowMove1 10s ease-in-out infinite;
 }
 
-/* second dark glow */
+/* second glow */
 body::after {
-  background: rgba(90, 90, 90, 0.18);
-  bottom: -150px;
-  right: -150px;
-  animation: glowMove2 18s ease-in-out infinite;
+  background: rgba(120, 120, 120, 0.22);
+  filter: blur(120px);
+  bottom: -120px;
+  right: -120px;
+  animation: glowMove2 12s ease-in-out infinite;
 }
 
-/* smooth floating movement */
+/* movement */
 @keyframes glowMove1 {
-  0%,100% {
-    transform: translate(0,0) scale(1);
-  }
-  50% {
-    transform: translate(120px,80px) scale(1.15);
-  }
+  0%,100% { transform: translate(0,0); }
+  50% { transform: translate(120px,80px); }
 }
 
 @keyframes glowMove2 {
-  0%,100% {
-    transform: translate(0,0) scale(1);
-  }
-  50% {
-    transform: translate(-120px,-80px) scale(1.1);
-  }
+  0%,100% { transform: translate(0,0); }
+  50% { transform: translate(-120px,-80px); }
 }
