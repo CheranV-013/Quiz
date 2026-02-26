@@ -15,7 +15,7 @@ const AppShell = ({ children }) => {
         <div className="app-brand" onClick={() => navigate('/')}>
           <img src={bannerImg} alt="UDHAYAM logo" className="brand-logo" />
           <div className="brand-text">
-            <span className="brand-title">UDHAYAM</span>
+            <span className="brand-title">TECH FUSION QUIZ</span>
             <span className="brand-subtitle">Dept. of Artificial Intellegence and Machine Learning</span>
           </div>
         </div>
