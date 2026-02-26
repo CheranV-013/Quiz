@@ -905,37 +905,37 @@ body {
   position: relative;
 }
 
-/* ================= SINGLE MOVING GRADIENT LINE ================= */
+/* ================= SINGLE DIAGONAL GRADIENT LINE ================= */
 
 body::before {
   content: "";
   position: fixed;
-  top: -40%;
-  left: -40%;
-  width: 180%;
-  height: 180%;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
   z-index: -1;
   pointer-events: none;
 
-  /* broad gradient slant line */
+  /* single broad gradient line */
   background: linear-gradient(
     135deg,
-    transparent 40%,
-    rgba(255, 185, 90, 0.18) 50%,
-    rgba(255, 210, 140, 0.28) 52%,
-    rgba(255, 185, 90, 0.18) 54%,
-    transparent 65%
+    transparent 47%,
+    rgba(255, 190, 100, 0.18) 50%,
+    rgba(255, 220, 150, 0.28) 52%,
+    rgba(255, 190, 100, 0.18) 54%,
+    transparent 57%
   );
 
-  animation: singleLineMove 7s linear infinite;
+  animation: diagonalSweep 6s linear infinite;
 }
 
-/* movement: top-left → bottom-right */
-@keyframes singleLineMove {
+/* ⭐ TRUE top-left → bottom-right motion */
+@keyframes diagonalSweep {
   0% {
-    transform: translate(-120px, -120px);
+    transform: translate(-35%, -35%);
   }
   100% {
-    transform: translate(120px, 120px);
+    transform: translate(35%, 35%);
   }
 }
