@@ -33,21 +33,22 @@ const HostLobby = () => {
     }
   }, []);
 
-  /* ---------- SAVE PERMANENTLY ---------- */
+  /* ---------- SAVE ---------- */
   const handleSave = () => {
-    const data = { title, questions };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ title, questions })
+    );
     alert('Questions saved permanently ✔');
   };
 
-  /* ---------- UPDATE QUESTION ---------- */
+  /* ---------- UPDATE ---------- */
   const updateQuestion = (index, patch) => {
     setQuestions(prev =>
       prev.map((q, i) => (i === index ? { ...q, ...patch } : q))
     );
   };
 
-  /* ---------- UPDATE OPTION ---------- */
   const updateOption = (qIndex, optIndex, value) => {
     setQuestions(prev =>
       prev.map((q, i) => {
@@ -70,7 +71,7 @@ const HostLobby = () => {
     });
   };
 
-  /* ---------- CREATE QUIZ ---------- */
+  /* ---------- CREATE ---------- */
   const handleCreate = (e) => {
     e.preventDefault();
     if (!socket) return;
@@ -86,15 +87,11 @@ const HostLobby = () => {
       return;
     }
 
-    setError('');
     setIsCreating(true);
 
     socket.emit(
       'host:createQuiz',
-      {
-        title,
-        questions: validQuestions
-      },
+      { title, questions: validQuestions },
       (response) => {
         setIsCreating(false);
 
@@ -111,91 +108,135 @@ const HostLobby = () => {
   };
 
   return (
-    <div className="panel panel-host">
-      <div className="panel-header">
+    <>
+      {/* ---------- CSS INSIDE ---------- */}
+      <style>{`
+        .panel-host {
+          padding: 20px;
+          color: white;
+        }
+
+        .question-card {
+          background: #0f1b35;
+          padding: 16px;
+          border-radius: 12px;
+          margin-bottom: 16px;
+          border: 1px solid #243a66;
+        }
+
+        input, select {
+          width: 100%;
+          padding: 10px;
+          margin: 6px 0;
+          border-radius: 8px;
+          border: 1px solid #2f4b7a;
+          background: #081327;
+          color: white;
+        }
+
+        .option-correct {
+          border: 2px solid #00ff99 !important;
+          background: rgba(0,255,153,0.08);
+        }
+
+        .correct-answer-row {
+          margin-top: 10px;
+          display: flex;
+          gap: 10px;
+          align-items: center;
+        }
+
+        button {
+          margin: 6px;
+          padding: 8px 14px;
+          border-radius: 8px;
+          border: none;
+          cursor: pointer;
+        }
+
+        .error-banner {
+          color: red;
+          margin-top: 10px;
+        }
+      `}</style>
+
+      <div className="panel panel-host">
         <h2>Create a new quiz</h2>
-        <p>Saved questions will stay permanently.</p>
-      </div>
+        <p>Saved questions stay permanently.</p>
 
-      <form className="panel-body" onSubmit={handleCreate}>
-        {/* TITLE */}
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Quiz title"
-        />
+        <form onSubmit={handleCreate}>
+          {/* TITLE */}
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Quiz title"
+          />
 
-        {/* QUESTIONS */}
-        {questions.map((q, qi) => (
-          <div key={q.id} className="question-card">
-
-            <input
-              value={q.text}
-              onChange={(e) =>
-                updateQuestion(qi, { text: e.target.value })
-              }
-              placeholder="Question..."
-            />
-
-            {/* OPTIONS */}
-            {q.options.map((opt, oi) => (
+          {/* QUESTIONS */}
+          {questions.map((q, qi) => (
+            <div key={q.id} className="question-card">
               <input
-                key={oi}
-                className={
-                  oi === q.correctIndex
-                    ? 'option-input option-correct'
-                    : 'option-input'
-                }
-                value={opt}
+                value={q.text}
                 onChange={(e) =>
-                  updateOption(qi, oi, e.target.value)
+                  updateQuestion(qi, { text: e.target.value })
                 }
-                placeholder={`Option ${oi + 1}`}
+                placeholder="Question..."
               />
-            ))}
 
-            {/* CORRECT ANSWER SELECT */}
-            <div className="correct-answer-row">
-              <label>Correct Answer:</label>
+              {q.options.map((opt, oi) => (
+                <input
+                  key={oi}
+                  className={
+                    oi === q.correctIndex ? 'option-correct' : ''
+                  }
+                  value={opt}
+                  onChange={(e) =>
+                    updateOption(qi, oi, e.target.value)
+                  }
+                  placeholder={`Option ${oi + 1}`}
+                />
+              ))}
 
-              <select
-                value={q.correctIndex}
-                onChange={(e) =>
-                  updateQuestion(qi, {
-                    correctIndex: Number(e.target.value)
-                  })
-                }
-              >
-                {q.options.map((_, oi) => (
-                  <option key={oi} value={oi}>
-                    {String.fromCharCode(65 + oi)}
-                  </option>
-                ))}
-              </select>
+              <div className="correct-answer-row">
+                <label>Correct Answer:</label>
+                <select
+                  value={q.correctIndex}
+                  onChange={(e) =>
+                    updateQuestion(qi, {
+                      correctIndex: Number(e.target.value)
+                    })
+                  }
+                >
+                  {q.options.map((_, oi) => (
+                    <option key={oi} value={oi}>
+                      {String.fromCharCode(65 + oi)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button type="button" onClick={() => removeQuestion(qi)}>
+                Remove
+              </button>
             </div>
+          ))}
 
-            <button type="button" onClick={() => removeQuestion(qi)}>
-              Remove
-            </button>
-          </div>
-        ))}
+          <button type="button" onClick={addQuestion}>
+            + Add question
+          </button>
 
-        {/* ACTIONS */}
-        <button type="button" onClick={addQuestion}>
-          + Add question
-        </button>
+          <button type="button" onClick={handleSave}>
+            💾 Save Questions
+          </button>
 
-        <button type="button" onClick={handleSave}>
-          💾 Save Questions
-        </button>
+          <button type="submit" disabled={isCreating}>
+            {isCreating ? 'Creating…' : 'Create & Go Live'}
+          </button>
 
-        <button type="submit" disabled={isCreating}>
-          {isCreating ? 'Creating…' : 'Create & Go Live'}
-        </button>
-
-        {error && <div className="error-banner">{error}</div>}
-      </form>
-    </div>
+          {error && <div className="error-banner">{error}</div>}
+        </form>
+      </div>
+    </>
   );
 };
 

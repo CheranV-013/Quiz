@@ -17,7 +17,7 @@ const ParticipantLive = () => {
   const [selectedOption, setSelectedOption] = useState(null);
   const [submittedOption, setSubmittedOption] = useState(null);
 
-  /* ⭐ NEW: lock submit per question */
+  /* ⭐ lock submit per question */
   const [submittedQuestionId, setSubmittedQuestionId] = useState(null);
 
   // ---------------- SOCKET CONNECTION ----------------
@@ -55,12 +55,12 @@ const ParticipantLive = () => {
 
     const newIndex = state.quiz.currentQuestionIndex;
 
-    // Reset ONLY when question changes
+    // reset ONLY when question changes
     if (newIndex !== currentIndex) {
       setCurrentIndex(newIndex);
       setSelectedOption(null);
       setSubmittedOption(null);
-      setSubmittedQuestionId(null); // ⭐ reset lock for next question
+      setSubmittedQuestionId(null);
     }
   };
 
@@ -95,7 +95,8 @@ const ParticipantLive = () => {
       !currentQuestion ||
       status !== 'in-progress' ||
       remainingSeconds === 0 ||
-      submittedQuestionId === currentQuestion.id
+      submittedQuestionId === currentQuestion.id ||
+      submittedOption !== null
     ) {
       return;
     }
@@ -110,7 +111,8 @@ const ParticipantLive = () => {
       status !== 'in-progress' ||
       remainingSeconds === 0 ||
       selectedOption === null ||
-      submittedQuestionId === currentQuestion.id
+      submittedQuestionId === currentQuestion.id ||
+      submittedOption !== null
     ) {
       return;
     }
@@ -123,7 +125,7 @@ const ParticipantLive = () => {
     });
 
     setSubmittedOption(selectedOption);
-    setSubmittedQuestionId(currentQuestion.id); // ⭐ lock submit
+    setSubmittedQuestionId(currentQuestion.id); // lock submit
   };
 
   return (
@@ -191,7 +193,7 @@ const ParticipantLive = () => {
                         type="button"
                         className={optionClass}
                         onClick={() => handleSelect(idx)}
-                        disabled={isSubmitted}
+                        disabled={isSubmitted || submittedOption !== null}
                       >
                         <span className="option-index">
                           {String.fromCharCode(65 + idx)}
@@ -227,7 +229,8 @@ const ParticipantLive = () => {
                       status !== 'in-progress' ||
                       remainingSeconds === 0 ||
                       selectedOption === null ||
-                      submittedQuestionId === currentQuestion.id
+                      submittedQuestionId === currentQuestion.id ||
+                      submittedOption !== null
                     }
                   >
                     {submittedQuestionId === currentQuestion.id
