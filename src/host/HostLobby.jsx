@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../socket/SocketContext';
 
-/* ---------- EMPTY QUESTION TEMPLATE ---------- */
+const STORAGE_KEY = 'permanent_quiz';
+
 const emptyQuestion = () => ({
   id: crypto.randomUUID(),
   text: '',
@@ -19,83 +20,88 @@ const HostLobby = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState('');
 
-  /* ---------- UPDATE QUESTION ---------- */
+  /* ---------- LOAD PERMANENT SAVED QUIZ ---------- */
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+
+    if (saved) {
+      const data = JSON.parse(saved);
+      setTitle(data.title || 'New Live Quiz');
+      setQuestions(
+        data.questions?.length ? data.questions : [emptyQuestion()]
+      );
+    }
+  }, []);
+
+  /* ---------- SAVE PERMANENTLY ---------- */
+  const handleSave = () => {
+    const data = {
+      title,
+      questions
+    };
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    alert('Questions saved permanently ✔');
+  };
+
+  /* ---------- QUESTION UPDATE ---------- */
   const updateQuestion = (index, patch) => {
-    setQuestions((prev) =>
+    setQuestions(prev =>
       prev.map((q, i) => (i === index ? { ...q, ...patch } : q))
     );
   };
 
-  /* ---------- UPDATE OPTION ---------- */
   const updateOption = (qIndex, optIndex, value) => {
-    setQuestions((prev) =>
+    setQuestions(prev =>
       prev.map((q, i) => {
         if (i !== qIndex) return q;
-
-        const updatedOptions = [...q.options];
-        updatedOptions[optIndex] = value;
-
-        return { ...q, options: updatedOptions };
+        const opts = [...q.options];
+        opts[optIndex] = value;
+        return { ...q, options: opts };
       })
     );
   };
 
-  /* ---------- ADD QUESTION ---------- */
   const addQuestion = () => {
-    setQuestions((prev) => [...prev, emptyQuestion()]);
+    setQuestions(prev => [...prev, emptyQuestion()]);
   };
 
-  /* ---------- REMOVE QUESTION ---------- */
   const removeQuestion = (index) => {
-    setQuestions((prev) => {
+    setQuestions(prev => {
       const next = prev.filter((_, i) => i !== index);
       return next.length ? next : [emptyQuestion()];
     });
   };
 
-  /* ---------- CREATE QUIZ ---------- */
+  /* ---------- CREATE & GO LIVE ---------- */
   const handleCreate = (e) => {
     e.preventDefault();
     if (!socket) return;
 
-    // Clean + validate questions
-    const validQuestions = questions
-      .map((q) => ({
-        ...q,
-        text: q.text.trim(),
-        options: q.options.map((o) => o.trim())
-      }))
-      .filter(
-        (q) =>
-          q.text &&
-          q.options.filter((o) => o !== '').length >= 2
-      );
+    const validQuestions = questions.filter(
+      q => q.text.trim() && q.options.some(o => o.trim())
+    );
 
     if (!validQuestions.length) {
-      setError('Add at least one question with minimum 2 options.');
+      setError('Add at least one valid question.');
       return;
     }
 
-    setError('');
     setIsCreating(true);
 
     socket.emit(
       'host:createQuiz',
       {
-        title: title.trim() || 'Untitled Quiz',
+        title,
         questions: validQuestions
       },
       (response) => {
         setIsCreating(false);
 
         if (!response || response.error) {
-          setError(response?.error || 'Failed to create quiz.');
+          setError(response?.error || 'Failed to create quiz');
           return;
         }
-
-        /* RESET STATE (IMPORTANT FIX) */
-        setTitle('New Live Quiz');
-        setQuestions([emptyQuestion()]);
 
         navigate(`/host/${response.quizId}`, {
           state: { quizCode: response.code }
@@ -108,133 +114,58 @@ const HostLobby = () => {
     <div className="panel panel-host">
       <div className="panel-header">
         <h2>Create a new quiz</h2>
-        <p>Set up your questions and share the quiz code with participants.</p>
+        <p>Saved questions will stay permanently.</p>
       </div>
 
       <form className="panel-body" onSubmit={handleCreate}>
-        {/* QUIZ TITLE */}
-        <label className="field">
-          <span className="field-label">Quiz title</span>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Weekly Standup Quiz"
-          />
-        </label>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Quiz title"
+        />
 
-        {/* QUESTIONS */}
-        <div className="question-list">
-          {questions.map((q, qi) => (
-            <div key={q.id} className="question-card">
-              <div className="question-card-header">
-                <span>Question {qi + 1}</span>
+        {questions.map((q, qi) => (
+          <div key={q.id} className="question-card">
+            <input
+              value={q.text}
+              onChange={(e) =>
+                updateQuestion(qi, { text: e.target.value })
+              }
+              placeholder="Question..."
+            />
 
-                {questions.length > 1 && (
-                  <button
-                    type="button"
-                    className="btn-icon"
-                    onClick={() => removeQuestion(qi)}
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-
-              <p
-                className="muted"
-                style={{ fontSize: '0.75rem', margin: '0 0 0.25rem' }}
-              >
-                Enter options and choose the correct answer.
-              </p>
-
+            {q.options.map((opt, oi) => (
               <input
-                type="text"
-                value={q.text}
+                key={oi}
+                value={opt}
                 onChange={(e) =>
-                  updateQuestion(qi, { text: e.target.value })
+                  updateOption(qi, oi, e.target.value)
                 }
-                placeholder="Type your question..."
+                placeholder={`Option ${oi + 1}`}
               />
+            ))}
 
-              <div className="options-grid">
-                {q.options.map((opt, oi) => (
-                  <div
-                    key={oi}
-                    className={
-                      'option-pill ' +
-                      (oi === q.correctIndex
-                        ? 'option-pill-correct'
-                        : '')
-                    }
-                  >
-                    <span className="option-index">
-                      {String.fromCharCode(65 + oi)}
-                    </span>
+            <button type="button" onClick={() => removeQuestion(qi)}>
+              Remove
+            </button>
+          </div>
+        ))}
 
-                    <input
-                      type="text"
-                      value={opt}
-                      onChange={(e) =>
-                        updateOption(qi, oi, e.target.value)
-                      }
-                      placeholder={`Option ${oi + 1}`}
-                    />
-                  </div>
-                ))}
-              </div>
+        <button type="button" onClick={addQuestion}>
+          + Add question
+        </button>
 
-              {/* CORRECT ANSWER */}
-              <div className="correct-answer-row">
-                <span
-                  className="muted"
-                  style={{ fontSize: '0.8rem' }}
-                >
-                  Correct answer
-                </span>
+        {/* ⭐ SAVE BUTTON */}
+        <button type="button" onClick={handleSave}>
+          💾 Save Questions
+        </button>
 
-                <select
-                  className="correct-select"
-                  value={q.correctIndex}
-                  onChange={(e) =>
-                    updateQuestion(qi, {
-                      correctIndex: Number(e.target.value)
-                    })
-                  }
-                >
-                  {q.options.map((_, oi) => (
-                    <option key={oi} value={oi}>
-                      {String.fromCharCode(65 + oi)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* CREATE BUTTON */}
+        <button type="submit" disabled={isCreating}>
+          {isCreating ? 'Creating…' : 'Create & Go Live'}
+        </button>
 
-        {/* ACTION BUTTONS */}
-        <div className="form-actions">
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={addQuestion}
-          >
-            + Add question
-          </button>
-
-          <div className="spacer" />
-
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={isCreating || !socket}
-          >
-            {isCreating ? 'Creating…' : 'Create & go live'}
-          </button>
-        </div>
-
-        {error && <div className="error-banner">{error}</div>}
+        {error && <div>{error}</div>}
       </form>
     </div>
   );
