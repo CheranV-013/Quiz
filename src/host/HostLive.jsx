@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useSocket } from '../socket/SocketContext';
 import Leaderboard from '../shared/Leaderboard';
@@ -15,17 +15,22 @@ const HostLive = () => {
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [remainingSeconds, setRemainingSeconds] = useState(null);
 
+  // ⭐ HOST ACTION LOCK (VERY IMPORTANT)
+  const actionLockRef = useRef(false);
+
   const quizCode = location.state?.quizCode || quiz?.code;
 
   /* ---------------- APPLY STATE ---------------- */
   const applyState = useCallback((state) => {
     if (!state?.quiz) return;
 
-    // create fresh copies (prevents stale reference issues)
     setQuiz({ ...state.quiz });
     setParticipants([...(state.participants || [])]);
     setStatus(state.quiz.status);
     setCurrentIndex(state.quiz.currentQuestionIndex);
+
+    // ⭐ unlock controls when fresh state arrives
+    actionLockRef.current = false;
   }, []);
 
   /* ---------------- JOIN QUIZ ---------------- */
@@ -70,11 +75,31 @@ const HostLive = () => {
     return () => clearInterval(id);
   }, [quiz]);
 
-  /* ---------------- SOCKET ACTIONS ---------------- */
-  const startQuiz = () => socket?.emit('host:startQuiz', { quizId });
-  const nextQuestion = () => socket?.emit('host:nextQuestion', { quizId });
-  const prevQuestion = () => socket?.emit('host:prevQuestion', { quizId });
-  const endQuiz = () => socket?.emit('host:endQuiz', { quizId });
+  /* ---------------- SAFE SOCKET ACTIONS ---------------- */
+
+  const startQuiz = () => {
+    if (!socket || actionLockRef.current) return;
+    actionLockRef.current = true;
+    socket.emit('host:startQuiz', { quizId });
+  };
+
+  const nextQuestion = () => {
+    if (!socket || actionLockRef.current) return;
+    actionLockRef.current = true;
+    socket.emit('host:nextQuestion', { quizId });
+  };
+
+  const prevQuestion = () => {
+    if (!socket || actionLockRef.current) return;
+    actionLockRef.current = true;
+    socket.emit('host:prevQuestion', { quizId });
+  };
+
+  const endQuiz = () => {
+    if (!socket || actionLockRef.current) return;
+    actionLockRef.current = true;
+    socket.emit('host:endQuiz', { quizId });
+  };
 
   /* ---------------- CURRENT QUESTION ---------------- */
   const currentQuestion =
@@ -139,16 +164,7 @@ const HostLive = () => {
 
                 <div className="options-grid options-grid-static">
                   {currentQuestion.options.map((opt, idx) => (
-                    <div
-                      key={idx}
-                      className={
-                        'option-tile ' +
-                        (status === 'finished' &&
-                        idx === currentQuestion.correctIndex
-                          ? 'option-tile-correct'
-                          : '')
-                      }
-                    >
+                    <div key={idx} className="option-tile">
                       <span className="option-index">
                         {String.fromCharCode(65 + idx)}
                       </span>
@@ -158,19 +174,17 @@ const HostLive = () => {
                 </div>
               </div>
             )}
-
-            {status === 'finished' && (
-              <div className="empty-state">
-                <p>The quiz has ended. Share the final leaderboard.</p>
-              </div>
-            )}
           </div>
 
           <div className="host-controls">
             <button
               className="btn btn-ghost"
               onClick={prevQuestion}
-              disabled={status !== 'in-progress' || currentIndex <= 0}
+              disabled={
+                status !== 'in-progress' ||
+                currentIndex <= 0 ||
+                actionLockRef.current
+              }
             >
               Previous
             </button>
@@ -181,7 +195,8 @@ const HostLive = () => {
               disabled={
                 status !== 'in-progress' ||
                 !quiz ||
-                currentIndex >= quiz.questions.length - 1
+                currentIndex >= quiz.questions.length - 1 ||
+                actionLockRef.current
               }
             >
               Next
@@ -192,7 +207,7 @@ const HostLive = () => {
             <button
               className="btn btn-outline"
               onClick={endQuiz}
-              disabled={status === 'finished'}
+              disabled={status === 'finished' || actionLockRef.current}
             >
               End quiz
             </button>
@@ -209,9 +224,7 @@ const HostLive = () => {
             {quizCode ? (
               <>
                 <div className="join-code">{quizCode}</div>
-                <p className="muted">
-                  Participants can join using this code.
-                </p>
+                <p className="muted">Participants can join using this code.</p>
               </>
             ) : (
               <p className="muted">Loading code…</p>
@@ -224,9 +237,6 @@ const HostLive = () => {
             <h3>Participants ({participants.length})</h3>
           </div>
           <div className="panel-body participants-list">
-            {participants.length === 0 && (
-              <p className="muted">No participants yet.</p>
-            )}
             {participants.map((p) => (
               <div key={p.id} className="participant-row">
                 <span>{p.name}</span>
