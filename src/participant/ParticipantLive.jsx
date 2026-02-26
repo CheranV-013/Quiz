@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSocket } from '../socket/SocketContext';
 import Leaderboard from '../shared/Leaderboard';
@@ -17,11 +17,11 @@ const ParticipantLive = () => {
   const [selectedOption, setSelectedOption] = useState(null);
   const [submittedOption, setSubmittedOption] = useState(null);
 
-  /* ⭐ lock submit per question */
   const [submittedQuestionId, setSubmittedQuestionId] = useState(null);
-
-  /* ⭐ NEW: prevent double click spam */
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ⭐ HARD LOCK (prevents double emit even before state updates)
+  const submitLockRef = useRef(false);
 
   // ---------------- SOCKET CONNECTION ----------------
   useEffect(() => {
@@ -65,6 +65,7 @@ const ParticipantLive = () => {
       setSubmittedOption(null);
       setSubmittedQuestionId(null);
       setIsSubmitting(false);
+      submitLockRef.current = false; // ⭐ reset lock
     }
   };
 
@@ -101,7 +102,8 @@ const ParticipantLive = () => {
       remainingSeconds === 0 ||
       submittedQuestionId === currentQuestion.id ||
       submittedOption !== null ||
-      isSubmitting
+      isSubmitting ||
+      submitLockRef.current
     ) {
       return;
     }
@@ -118,12 +120,15 @@ const ParticipantLive = () => {
       selectedOption === null ||
       submittedQuestionId === currentQuestion.id ||
       submittedOption !== null ||
-      isSubmitting
+      isSubmitting ||
+      submitLockRef.current
     ) {
       return;
     }
 
-    setIsSubmitting(true); // ⭐ lock instantly
+    // ⭐ INSTANT HARD LOCK
+    submitLockRef.current = true;
+    setIsSubmitting(true);
 
     socket.emit('participant:answer', {
       quizId,
@@ -201,7 +206,12 @@ const ParticipantLive = () => {
                         type="button"
                         className={optionClass}
                         onClick={() => handleSelect(idx)}
-                        disabled={isSubmitted || submittedOption !== null || isSubmitting}
+                        disabled={
+                          isSubmitted ||
+                          submittedOption !== null ||
+                          isSubmitting ||
+                          submitLockRef.current
+                        }
                       >
                         <span className="option-index">
                           {String.fromCharCode(65 + idx)}
@@ -233,7 +243,8 @@ const ParticipantLive = () => {
                       selectedOption === null ||
                       submittedQuestionId === currentQuestion.id ||
                       submittedOption !== null ||
-                      isSubmitting
+                      isSubmitting ||
+                      submitLockRef.current
                     }
                   >
                     {submittedQuestionId === currentQuestion.id
@@ -267,4 +278,4 @@ const ParticipantLive = () => {
   );
 };
 
-export default ParticipantLive;
+export default ParticipantLive;   
