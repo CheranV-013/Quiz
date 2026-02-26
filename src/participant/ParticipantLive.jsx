@@ -16,14 +16,43 @@ const ParticipantLive = () => {
 
   const [selectedOption, setSelectedOption] = useState(null);
   const [submittedOption, setSubmittedOption] = useState(null);
-
   const [submittedQuestionId, setSubmittedQuestionId] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ⭐ HARD LOCK (prevents double emit even before state updates)
+  // ⭐ REAL HARD LOCK (sync, instant)
   const submitLockRef = useRef(false);
+  const lastQuestionIdRef = useRef(null);
 
-  // ---------------- SOCKET CONNECTION ----------------
+  /* ---------------- APPLY STATE ---------------- */
+  const applyState = (state) => {
+    if (!state?.quiz) return;
+
+    setQuiz(state.quiz);
+    setParticipants(state.participants || []);
+    setStatus(state.quiz.status);
+
+    const newIndex = state.quiz.currentQuestionIndex;
+    setCurrentIndex(newIndex);
+
+    const q =
+      newIndex >= 0 &&
+      newIndex < state.quiz.questions.length
+        ? state.quiz.questions[newIndex]
+        : null;
+
+    // ⭐ RESET ONLY WHEN QUESTION REALLY CHANGES
+    if (q && q.id !== lastQuestionIdRef.current) {
+      lastQuestionIdRef.current = q.id;
+
+      setSelectedOption(null);
+      setSubmittedOption(null);
+      setSubmittedQuestionId(null);
+
+      // unlock submit for new question
+      submitLockRef.current = false;
+    }
+  };
+
+  /* ---------------- SOCKET ---------------- */
   useEffect(() => {
     if (!socket || !quizId || !participantId) return;
 
@@ -39,9 +68,7 @@ const ParticipantLive = () => {
       }
     );
 
-    const handleState = (state) => {
-      applyState(state);
-    };
+    const handleState = (state) => applyState(state);
 
     socket.on('quiz:state', handleState);
 
@@ -50,26 +77,7 @@ const ParticipantLive = () => {
     };
   }, [socket, quizId, participantId, navigate]);
 
-  // ---------------- APPLY SERVER STATE ----------------
-  const applyState = (state) => {
-    setQuiz(state.quiz);
-    setParticipants(state.participants || []);
-    setStatus(state.quiz.status);
-
-    const newIndex = state.quiz.currentQuestionIndex;
-
-    // reset ONLY when question changes
-    if (newIndex !== currentIndex) {
-      setCurrentIndex(newIndex);
-      setSelectedOption(null);
-      setSubmittedOption(null);
-      setSubmittedQuestionId(null);
-      setIsSubmitting(false);
-      submitLockRef.current = false; // ⭐ reset lock
-    }
-  };
-
-  // ---------------- TIMER ----------------
+  /* ---------------- TIMER ---------------- */
   useEffect(() => {
     if (!quiz || quiz.currentQuestionIndex < 0 || !quiz.currentQuestionEndsAt) {
       setRemainingSeconds(null);
@@ -78,8 +86,7 @@ const ParticipantLive = () => {
 
     const update = () => {
       const diffMs = quiz.currentQuestionEndsAt - Date.now();
-      const seconds = Math.max(0, Math.ceil(diffMs / 1000));
-      setRemainingSeconds(seconds);
+      setRemainingSeconds(Math.max(0, Math.ceil(diffMs / 1000)));
     };
 
     update();
@@ -94,54 +101,46 @@ const ParticipantLive = () => {
       ? quiz.questions[currentIndex]
       : null;
 
-  // ---------------- SELECT OPTION ----------------
+  /* ---------------- SELECT ---------------- */
   const handleSelect = (idx) => {
     if (
       !currentQuestion ||
+      submitLockRef.current ||
       status !== 'in-progress' ||
-      remainingSeconds === 0 ||
-      submittedQuestionId === currentQuestion.id ||
-      submittedOption !== null ||
-      isSubmitting ||
-      submitLockRef.current
-    ) {
+      remainingSeconds === 0
+    )
       return;
-    }
 
     setSelectedOption(idx);
   };
 
-  // ---------------- SUBMIT ANSWER ----------------
+  /* ---------------- SUBMIT ---------------- */
   const handleSubmit = () => {
-    // ⭐ HARD BLOCK — stops ALL extra clicks instantly
+    // ⭐ INSTANT HARD BLOCK
     if (submitLockRef.current) return;
-  
+
     if (
       !currentQuestion ||
       status !== 'in-progress' ||
       remainingSeconds === 0 ||
-      selectedOption === null ||
-      submittedQuestionId === currentQuestion.id ||
-      submittedOption !== null
+      selectedOption === null
     ) {
       return;
     }
-  
-    // ⭐ LOCK FIRST (before anything)
+
+    // LOCK IMMEDIATELY
     submitLockRef.current = true;
-    setIsSubmitting(true);
-  
+
     socket.emit('participant:answer', {
       quizId,
       participantId,
       questionId: currentQuestion.id,
       optionIndex: selectedOption
     });
-  
+
     setSubmittedOption(selectedOption);
     setSubmittedQuestionId(currentQuestion.id);
   };
-
 
   return (
     <div className="participant-live">
@@ -149,135 +148,51 @@ const ParticipantLive = () => {
         <div className="panel">
           <div className="panel-header">
             <h2>{quiz?.title || 'Live Quiz'}</h2>
-            <p>
-              {status === 'lobby' && 'Waiting for the host to start.'}
-              {status === 'in-progress' && currentQuestion && 'Make your choice!'}
-              {status === 'finished' && 'Quiz finished. See the final leaderboard.'}
-            </p>
           </div>
 
           <div className="panel-body">
-            {status === 'lobby' && (
-              <div className="empty-state">
-                <p>Hang tight, the host will start the quiz soon.</p>
-              </div>
-            )}
-
             {status === 'in-progress' && currentQuestion && (
-              <div className="question-live">
-                <div className="question-meta">
-                  <span>
-                    Question {currentIndex + 1} of {quiz.questions.length}
-                  </span>
-
-                  {typeof remainingSeconds === 'number' && (
-                    <span
-                      className={
-                        'timer-pill ' +
-                        (remainingSeconds === 0 ? 'timer-pill-expired' : '')
-                      }
-                    >
-                      {remainingSeconds === 0
-                        ? 'Time up'
-                        : `Time left: ${remainingSeconds}s`}
-                    </span>
-                  )}
-                </div>
-
-                <h3 className="question-text">{currentQuestion.text}</h3>
+              <>
+                <h3>{currentQuestion.text}</h3>
 
                 <div className="options-grid">
-                  {currentQuestion.options.map((opt, idx) => {
-                    const isSelected = selectedOption === idx;
-                    const isSubmitted =
-                      submittedQuestionId === currentQuestion.id;
-
-                    let optionClass = "option-tile option-tile-clickable ";
-
-                    if (!isSubmitted && isSelected) {
-                      optionClass += "option-green ";
-                    }
-
-                    if (isSubmitted && idx === submittedOption) {
-                      optionClass += "option-green ";
-                    }
-
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        className={optionClass}
-                        onClick={() => handleSelect(idx)}
-                        disabled={
-                          isSubmitted ||
-                          submittedOption !== null ||
-                          isSubmitting ||
-                          submitLockRef.current
-                        }
-                      >
-                        <span className="option-index">
-                          {String.fromCharCode(65 + idx)}
-                        </span>
-                        <span className="option-text">
-                          {opt || <em>Empty option</em>}
-                        </span>
-                      </button>
-                    );
-                  })}
+                  {currentQuestion.options.map((opt, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleSelect(idx)}
+                      disabled={submitLockRef.current}
+                      className={
+                        selectedOption === idx
+                          ? "option-tile option-green"
+                          : "option-tile"
+                      }
+                    >
+                      {opt}
+                    </button>
+                  ))}
                 </div>
 
-                <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center' }}>
-                  <span className="muted" style={{ fontSize: '0.8rem' }}>
-                    {selectedOption === null
-                      ? 'Select an option, then submit.'
-                      : `Selected: ${String.fromCharCode(65 + selectedOption)}`}
-                  </span>
-
-                  <div className="spacer" />
-
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={handleSubmit}
-                    disabled={
-                      status !== 'in-progress' ||
-                      remainingSeconds === 0 ||
-                      selectedOption === null ||
-                      submittedQuestionId === currentQuestion.id ||
-                      submittedOption !== null ||
-                      isSubmitting ||
-                      submitLockRef.current
-                    }
-                  >
-                    {submittedQuestionId === currentQuestion.id
-                      ? "Submitted ✔"
-                      : "Submit answer"}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {status === 'finished' && (
-              <div className="empty-state">
-                <p>The quiz is over. Check how you did on the leaderboard.</p>
-              </div>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleSubmit}
+                  disabled={
+                    submitLockRef.current ||
+                    selectedOption === null
+                  }
+                >
+                  {submitLockRef.current ? "Submitted ✔" : "Submit answer"}
+                </button>
+              </>
             )}
           </div>
         </div>
       </section>
 
       <aside className="participant-sidebar">
-        <div className="panel">
-          <div className="panel-header">
-            <h3>Live leaderboard</h3>
-          </div>
-          <div className="panel-body">
-            <Leaderboard participants={participants} highlightId={participantId} />
-          </div>
-        </div>
+        <Leaderboard participants={participants} highlightId={participantId} />
       </aside>
     </div>
   );
 };
 
-export default ParticipantLive;   
+export default ParticipantLive;
