@@ -16,7 +16,7 @@ const AppShell = ({ children }) => {
           <img src={bannerImg} alt="UDHAYAM logo" className="brand-logo" />
           <div className="brand-text">
             <span className="brand-title">TECH FUSION QUIZ</span>
-            <span className="brand-subtitle">Dept. of Artificial Intellegence and Machine Learning</span>
+            <span className="brand-subtitle">Dept.of AI&ML</span>
           </div>
         </div>
 
