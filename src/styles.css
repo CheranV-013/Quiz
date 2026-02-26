@@ -65,6 +65,12 @@ button {
   font-size: 0.85rem;
 }
 
+.brand-logo {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+}
+
 .brand-text {
   display: flex;
   flex-direction: column;

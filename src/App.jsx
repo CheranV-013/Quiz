@@ -13,12 +13,10 @@ const AppShell = ({ children }) => {
     <div className="app-root">
       <header className="app-header">
         <div className="app-brand" onClick={() => navigate('/')}>
-          <span className="brand-mark">QZ</span>
+          <img src={bannerImg} alt="UDHAYAM logo" className="brand-logo" />
           <div className="brand-text">
-            <span className="brand-title">Tech Fusion Quiz</span>
-            <span className="brand-subtitle">
-              Dept. of Artificial Intelligence and Machine Learning
-            </span>
+            <span className="brand-title">UDHAYAM</span>
+            <span className="brand-subtitle">Dept. of Artificial Intellegence and Machine Learning</span>
           </div>
         </div>
 
