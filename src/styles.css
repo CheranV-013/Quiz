@@ -895,73 +895,67 @@ input[type='text']:focus {
 }
 
 
-/* ================= GOLDEN LIVE LINEAR BACKGROUND ================= */
+/* ================= DARK BACKGROUND ================= */
 
 body {
   margin: 0;
   min-height: 100vh;
   overflow-x: hidden;
-
-  /* dark + golden gradient */
   background: linear-gradient(
     -45deg,
     #000000,
-    #111111,
-    #2b1d08,
+    #050505,
+    #0a0a0a,
     #000000
   );
-
-  background-size: 400% 400%;
-  animation: goldFlow 10s ease infinite; /* ⭐ little faster */
+  background-size: 300% 300%;
+  animation: bgMove 9s ease infinite; /* little faster */
 }
 
-/* smooth moving gradient */
-@keyframes goldFlow {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+/* subtle movement */
+@keyframes bgMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-/* ================= SOFT GOLDEN GLOW ================= */
+/* ================= GOLDEN LIGHT ACCENTS ================= */
 
 body::before,
 body::after {
   content: "";
   position: fixed;
-  width: 500px;
-  height: 500px;
+  width: 380px;
+  height: 380px;
   border-radius: 50%;
-  filter: blur(130px);
+  filter: blur(120px);
   z-index: -1;
   pointer-events: none;
 }
 
+/* top-left soft glow */
 body::before {
-  background: rgba(255, 180, 70, 0.18);
+  background: rgba(255, 170, 60, 0.12);
   top: -120px;
   left: -120px;
-  animation: glowMove1 9s ease-in-out infinite;
+  animation: goldMove1 8s ease-in-out infinite;
 }
 
+/* bottom-right glow */
 body::after {
-  background: rgba(180, 120, 40, 0.16);
-  bottom: -120px;
-  right: -120px;
-  animation: glowMove2 11s ease-in-out infinite;
+  background: rgba(200, 130, 40, 0.10);
+  bottom: -140px;
+  right: -140px;
+  animation: goldMove2 10s ease-in-out infinite;
 }
 
-@keyframes glowMove1 {
+@keyframes goldMove1 {
   0%,100% { transform: translate(0,0); }
-  50% { transform: translate(100px,70px); }
+  50% { transform: translate(80px,60px); }
 }
 
-@keyframes glowMove2 {
+@keyframes goldMove2 {
   0%,100% { transform: translate(0,0); }
-  50% { transform: translate(-100px,-70px); }
+  50% { transform: translate(-80px,-60px); }
 }
+
