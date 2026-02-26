@@ -933,33 +933,6 @@ body::before {
     transform: translate(-60px, -40px) scale(1);
   }
 }
-/* slow smooth movement */
-@keyframes darkFlow {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-/* subtle soft glow */
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(
-    circle at 20% 20%,
-    rgba(0, 120, 255, 0.08),
-    transparent 60%
-  );
-  pointer-events: none;
-  z-index: -1;
-}
 
 .panel {
   background: rgba(10,10,10,0.75);
