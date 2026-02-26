@@ -20,7 +20,7 @@ const HostLobby = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState('');
 
-  /* ---------- LOAD PERMANENT SAVED QUIZ ---------- */
+  /* ---------- LOAD SAVED QUIZ ---------- */
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
 
@@ -35,22 +35,19 @@ const HostLobby = () => {
 
   /* ---------- SAVE PERMANENTLY ---------- */
   const handleSave = () => {
-    const data = {
-      title,
-      questions
-    };
-
+    const data = { title, questions };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     alert('Questions saved permanently ✔');
   };
 
-  /* ---------- QUESTION UPDATE ---------- */
+  /* ---------- UPDATE QUESTION ---------- */
   const updateQuestion = (index, patch) => {
     setQuestions(prev =>
       prev.map((q, i) => (i === index ? { ...q, ...patch } : q))
     );
   };
 
+  /* ---------- UPDATE OPTION ---------- */
   const updateOption = (qIndex, optIndex, value) => {
     setQuestions(prev =>
       prev.map((q, i) => {
@@ -73,13 +70,15 @@ const HostLobby = () => {
     });
   };
 
-  /* ---------- CREATE & GO LIVE ---------- */
+  /* ---------- CREATE QUIZ ---------- */
   const handleCreate = (e) => {
     e.preventDefault();
     if (!socket) return;
 
     const validQuestions = questions.filter(
-      q => q.text.trim() && q.options.some(o => o.trim())
+      q =>
+        q.text.trim() &&
+        q.options.filter(o => o.trim()).length >= 2
     );
 
     if (!validQuestions.length) {
@@ -87,6 +86,7 @@ const HostLobby = () => {
       return;
     }
 
+    setError('');
     setIsCreating(true);
 
     socket.emit(
@@ -118,14 +118,17 @@ const HostLobby = () => {
       </div>
 
       <form className="panel-body" onSubmit={handleCreate}>
+        {/* TITLE */}
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Quiz title"
         />
 
+        {/* QUESTIONS */}
         {questions.map((q, qi) => (
           <div key={q.id} className="question-card">
+
             <input
               value={q.text}
               onChange={(e) =>
@@ -134,9 +137,15 @@ const HostLobby = () => {
               placeholder="Question..."
             />
 
+            {/* OPTIONS */}
             {q.options.map((opt, oi) => (
               <input
                 key={oi}
+                className={
+                  oi === q.correctIndex
+                    ? 'option-input option-correct'
+                    : 'option-input'
+                }
                 value={opt}
                 onChange={(e) =>
                   updateOption(qi, oi, e.target.value)
@@ -145,27 +154,46 @@ const HostLobby = () => {
               />
             ))}
 
+            {/* CORRECT ANSWER SELECT */}
+            <div className="correct-answer-row">
+              <label>Correct Answer:</label>
+
+              <select
+                value={q.correctIndex}
+                onChange={(e) =>
+                  updateQuestion(qi, {
+                    correctIndex: Number(e.target.value)
+                  })
+                }
+              >
+                {q.options.map((_, oi) => (
+                  <option key={oi} value={oi}>
+                    {String.fromCharCode(65 + oi)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <button type="button" onClick={() => removeQuestion(qi)}>
               Remove
             </button>
           </div>
         ))}
 
+        {/* ACTIONS */}
         <button type="button" onClick={addQuestion}>
           + Add question
         </button>
 
-        {/* ⭐ SAVE BUTTON */}
         <button type="button" onClick={handleSave}>
           💾 Save Questions
         </button>
 
-        {/* CREATE BUTTON */}
         <button type="submit" disabled={isCreating}>
           {isCreating ? 'Creating…' : 'Create & Go Live'}
         </button>
 
-        {error && <div>{error}</div>}
+        {error && <div className="error-banner">{error}</div>}
       </form>
     </div>
   );
