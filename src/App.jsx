@@ -5,7 +5,7 @@ import HostLive from './host/HostLive';
 import ParticipantJoin from './participant/ParticipantJoin';
 import ParticipantLive from './participant/ParticipantLive';
 import bannerImg from './udhayam.jpg';
-
+import smallLogo from './Logo.jpg';
 const AppShell = ({ children }) => {
   const navigate = useNavigate();
 
@@ -13,7 +13,7 @@ const AppShell = ({ children }) => {
     <div className="app-root">
       <header className="app-header">
         <div className="app-brand" onClick={() => navigate('/')}>
-          <img src={bannerImg} alt="UDHAYAM logo" className="brand-logo" />
+          <img src={smallLogo} alt="UDHAYAM logo" className="brand-logo" />
           <div className="brand-text">
             <span className="brand-title">TECH FUSION QUIZ</span>
             <span className="brand-subtitle">Dept.of AI&ML</span>
