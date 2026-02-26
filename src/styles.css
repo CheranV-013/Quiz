@@ -895,17 +895,41 @@ input[type='text']:focus {
 }
 
 
-/* ================= LIVE DARK GREY GLOW ================= */
+/* ================= GOLDEN LIVE LINEAR BACKGROUND ================= */
 
 body {
   margin: 0;
   min-height: 100vh;
   overflow-x: hidden;
-  background: #050505;
-  position: relative;
+
+  /* dark + golden gradient */
+  background: linear-gradient(
+    -45deg,
+    #000000,
+    #111111,
+    #2b1d08,
+    #000000
+  );
+
+  background-size: 400% 400%;
+  animation: goldFlow 10s ease infinite; /* ⭐ little faster */
 }
 
-/* glowing layer */
+/* smooth moving gradient */
+@keyframes goldFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ================= SOFT GOLDEN GLOW ================= */
+
 body::before,
 body::after {
   content: "";
@@ -913,35 +937,31 @@ body::after {
   width: 500px;
   height: 500px;
   border-radius: 50%;
-  z-index: 0;   /* IMPORTANT */
+  filter: blur(130px);
+  z-index: -1;
   pointer-events: none;
 }
 
-/* first glow */
 body::before {
-  background: rgba(180, 180, 180, 0.25);
-  filter: blur(120px);
-  top: -100px;
-  left: -100px;
-  animation: glowMove1 10s ease-in-out infinite;
+  background: rgba(255, 180, 70, 0.18);
+  top: -120px;
+  left: -120px;
+  animation: glowMove1 9s ease-in-out infinite;
 }
 
-/* second glow */
 body::after {
-  background: rgba(120, 120, 120, 0.22);
-  filter: blur(120px);
+  background: rgba(180, 120, 40, 0.16);
   bottom: -120px;
   right: -120px;
-  animation: glowMove2 12s ease-in-out infinite;
+  animation: glowMove2 11s ease-in-out infinite;
 }
 
-/* movement */
 @keyframes glowMove1 {
   0%,100% { transform: translate(0,0); }
-  50% { transform: translate(120px,80px); }
+  50% { transform: translate(100px,70px); }
 }
 
 @keyframes glowMove2 {
   0%,100% { transform: translate(0,0); }
-  50% { transform: translate(-120px,-80px); }
+  50% { transform: translate(-100px,-70px); }
 }
