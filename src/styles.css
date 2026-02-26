@@ -55,7 +55,7 @@ button {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 2rem;
-  border-bottom: 1px solid rgba(20, 14, 6, 0.9);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
@@ -145,7 +145,7 @@ button {
   font-size: 0.75rem;
   color: #9ca3af;
   border-top: 1px solid rgba(148, 163, 184, 0.2);
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(98, 101, 17, 0.85);
 }
 
 
