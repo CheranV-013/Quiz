@@ -79,7 +79,7 @@ button {
 }
 
 .brand-logo {
-  height: 46px;
+  height: 52px;
   width: auto;
   object-fit: contain;
 }
@@ -921,9 +921,9 @@ body::before {
   background: linear-gradient(
     135deg,
     transparent 47%,
-    rgba(255, 190, 100, 0.18) 50%,
-    rgba(255, 220, 150, 0.28) 52%,
-    rgba(255, 190, 100, 0.18) 54%,
+    rgba(255, 190, 100, 0.08) 50%,
+  rgba(255, 220, 150, 0.12) 52%,
+  rgba(255, 190, 100, 0.08) 54%,
     transparent 57%
   );
 
