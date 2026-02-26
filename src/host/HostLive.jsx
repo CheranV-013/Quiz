@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useSocket } from '../socket/SocketContext';
 import Leaderboard from '../shared/Leaderboard';
@@ -11,12 +11,24 @@ const HostLive = () => {
 
   const [quiz, setQuiz] = useState(null);
   const [participants, setParticipants] = useState([]);
-  const [status, setStatus] = useState('lobby'); // lobby | in-progress | finished
+  const [status, setStatus] = useState('lobby');
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [remainingSeconds, setRemainingSeconds] = useState(null);
 
   const quizCode = location.state?.quizCode || quiz?.code;
 
+  /* ---------------- APPLY STATE ---------------- */
+  const applyState = useCallback((state) => {
+    if (!state?.quiz) return;
+
+    // create fresh copies (prevents stale reference issues)
+    setQuiz({ ...state.quiz });
+    setParticipants([...(state.participants || [])]);
+    setStatus(state.quiz.status);
+    setCurrentIndex(state.quiz.currentQuestionIndex);
+  }, []);
+
+  /* ---------------- JOIN QUIZ ---------------- */
   useEffect(() => {
     if (!socket || !quizId) return;
 
@@ -37,15 +49,9 @@ const HostLive = () => {
     return () => {
       socket.off('quiz:state', handleState);
     };
-  }, [socket, quizId, navigate]);
+  }, [socket, quizId, navigate, applyState]);
 
-  const applyState = (state) => {
-    setQuiz(state.quiz);
-    setParticipants(state.participants || []);
-    setStatus(state.quiz.status);
-    setCurrentIndex(state.quiz.currentQuestionIndex);
-  };
-
+  /* ---------------- TIMER ---------------- */
   useEffect(() => {
     if (!quiz || quiz.currentQuestionIndex < 0 || !quiz.currentQuestionEndsAt) {
       setRemainingSeconds(null);
@@ -60,27 +66,21 @@ const HostLive = () => {
 
     update();
     const id = setInterval(update, 1000);
+
     return () => clearInterval(id);
   }, [quiz]);
 
-  const startQuiz = () => {
-    socket.emit('host:startQuiz', { quizId });
-  };
+  /* ---------------- SOCKET ACTIONS ---------------- */
+  const startQuiz = () => socket?.emit('host:startQuiz', { quizId });
+  const nextQuestion = () => socket?.emit('host:nextQuestion', { quizId });
+  const prevQuestion = () => socket?.emit('host:prevQuestion', { quizId });
+  const endQuiz = () => socket?.emit('host:endQuiz', { quizId });
 
-  const nextQuestion = () => {
-    socket.emit('host:nextQuestion', { quizId });
-  };
-
-  const prevQuestion = () => {
-    socket.emit('host:prevQuestion', { quizId });
-  };
-
-  const endQuiz = () => {
-    socket.emit('host:endQuiz', { quizId });
-  };
-
+  /* ---------------- CURRENT QUESTION ---------------- */
   const currentQuestion =
-    quiz && currentIndex >= 0 && currentIndex < quiz.questions.length
+    quiz &&
+    currentIndex >= 0 &&
+    currentIndex < quiz.questions?.length
       ? quiz.questions[currentIndex]
       : null;
 
@@ -120,6 +120,7 @@ const HostLive = () => {
                   <span>
                     Question {currentIndex + 1} of {quiz.questions.length}
                   </span>
+
                   {typeof remainingSeconds === 'number' && (
                     <span
                       className={
@@ -133,19 +134,24 @@ const HostLive = () => {
                     </span>
                   )}
                 </div>
+
                 <h3 className="question-text">{currentQuestion.text}</h3>
+
                 <div className="options-grid options-grid-static">
                   {currentQuestion.options.map((opt, idx) => (
                     <div
                       key={idx}
                       className={
                         'option-tile ' +
-                        (status === 'finished' && idx === currentQuestion.correctIndex
+                        (status === 'finished' &&
+                        idx === currentQuestion.correctIndex
                           ? 'option-tile-correct'
                           : '')
                       }
                     >
-                      <span className="option-index">{String.fromCharCode(65 + idx)}</span>
+                      <span className="option-index">
+                        {String.fromCharCode(65 + idx)}
+                      </span>
                       <span>{opt || <em>Empty option</em>}</span>
                     </div>
                   ))}
@@ -155,7 +161,7 @@ const HostLive = () => {
 
             {status === 'finished' && (
               <div className="empty-state">
-                <p>The quiz has ended. Share the final leaderboard with your audience.</p>
+                <p>The quiz has ended. Share the final leaderboard.</p>
               </div>
             )}
           </div>
@@ -168,6 +174,7 @@ const HostLive = () => {
             >
               Previous
             </button>
+
             <button
               className="btn btn-ghost"
               onClick={nextQuestion}
@@ -179,7 +186,9 @@ const HostLive = () => {
             >
               Next
             </button>
+
             <div className="spacer" />
+
             <button
               className="btn btn-outline"
               onClick={endQuiz}
@@ -201,7 +210,7 @@ const HostLive = () => {
               <>
                 <div className="join-code">{quizCode}</div>
                 <p className="muted">
-                  Participants can join via the code or by opening the join link and entering it.
+                  Participants can join using this code.
                 </p>
               </>
             ) : (
@@ -216,7 +225,7 @@ const HostLive = () => {
           </div>
           <div className="panel-body participants-list">
             {participants.length === 0 && (
-              <p className="muted">No one has joined yet. Share the code to get started.</p>
+              <p className="muted">No participants yet.</p>
             )}
             {participants.map((p) => (
               <div key={p.id} className="participant-row">
@@ -241,4 +250,3 @@ const HostLive = () => {
 };
 
 export default HostLive;
-
