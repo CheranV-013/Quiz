@@ -113,33 +113,35 @@ const ParticipantLive = () => {
 
   // ---------------- SUBMIT ANSWER ----------------
   const handleSubmit = () => {
+    // ⭐ HARD BLOCK — stops ALL extra clicks instantly
+    if (submitLockRef.current) return;
+  
     if (
       !currentQuestion ||
       status !== 'in-progress' ||
       remainingSeconds === 0 ||
       selectedOption === null ||
       submittedQuestionId === currentQuestion.id ||
-      submittedOption !== null ||
-      isSubmitting ||
-      submitLockRef.current
+      submittedOption !== null
     ) {
       return;
     }
-
-    // ⭐ INSTANT HARD LOCK
+  
+    // ⭐ LOCK FIRST (before anything)
     submitLockRef.current = true;
     setIsSubmitting(true);
-
+  
     socket.emit('participant:answer', {
       quizId,
       participantId,
       questionId: currentQuestion.id,
       optionIndex: selectedOption
     });
-
+  
     setSubmittedOption(selectedOption);
     setSubmittedQuestionId(currentQuestion.id);
   };
+
 
   return (
     <div className="participant-live">
