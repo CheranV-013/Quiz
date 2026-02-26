@@ -19,11 +19,47 @@ const ParticipantLive = () => {
   const [submittedQuestionId, setSubmittedQuestionId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ⭐ HARD LOCK (prevents multiple submits)
+  // ⭐ NEW: animation state
+  const [animateQuestion, setAnimateQuestion] = useState(false);
+
+  // ⭐ HARD LOCK (prevents multiple submit)
   const submitLockRef = useRef(false);
 
-  // ⭐ FIX: prevents stale index issues
+  // ⭐ prevents stale question index issues
   const lastQuestionIndexRef = useRef(-1);
+
+  // ---------------- APPLY STATE ----------------
+  const applyState = (state) => {
+    if (!state?.quiz) return;
+
+    setQuiz(state.quiz);
+    setParticipants(state.participants || []);
+    setStatus(state.quiz.status);
+
+    const newIndex = state.quiz.currentQuestionIndex;
+
+    // ALWAYS update index (important for timer)
+    setCurrentIndex(newIndex);
+
+    // reset only when question changes
+    if (newIndex !== lastQuestionIndexRef.current) {
+      lastQuestionIndexRef.current = newIndex;
+
+      // ⭐ START SMOOTH ANIMATION
+      setAnimateQuestion(true);
+      setTimeout(() => {
+        setAnimateQuestion(false);
+      }, 350);
+
+      setSelectedOption(null);
+      setSubmittedOption(null);
+      setSubmittedQuestionId(null);
+      setIsSubmitting(false);
+
+      // unlock submit for new question
+      submitLockRef.current = false;
+    }
+  };
 
   // ---------------- SOCKET CONNECTION ----------------
   useEffect(() => {
@@ -52,50 +88,28 @@ const ParticipantLive = () => {
     };
   }, [socket, quizId, participantId, navigate]);
 
-  // ---------------- APPLY SERVER STATE ----------------
-  const applyState = (state) => {
-    if (!state?.quiz) return;
-
-    setQuiz(state.quiz);
-    setParticipants(state.participants || []);
-    setStatus(state.quiz.status);
-
-    const newIndex = state.quiz.currentQuestionIndex;
-
-    // ALWAYS update index (fix timer)
-    setCurrentIndex(newIndex);
-
-    // reset only when question changes
-    if (newIndex !== lastQuestionIndexRef.current) {
-      lastQuestionIndexRef.current = newIndex;
-
-      setSelectedOption(null);
-      setSubmittedOption(null);
-      setSubmittedQuestionId(null);
-      setIsSubmitting(false);
-
-      // unlock submit for next question
-      submitLockRef.current = false;
-    }
-  };
-
-  // ---------------- TIMER ----------------
+  // ---------------- TIMER (FIXED) ----------------
   useEffect(() => {
-    if (!quiz || quiz.currentQuestionIndex < 0 || !quiz.currentQuestionEndsAt) {
+    if (
+      !quiz ||
+      quiz.currentQuestionIndex < 0 ||
+      !quiz.currentQuestionEndsAt
+    ) {
       setRemainingSeconds(null);
       return;
     }
 
-    const update = () => {
+    const updateTimer = () => {
       const diffMs = quiz.currentQuestionEndsAt - Date.now();
       const seconds = Math.max(0, Math.ceil(diffMs / 1000));
       setRemainingSeconds(seconds);
     };
 
-    update();
-    const id = setInterval(update, 1000);
-    return () => clearInterval(id);
-  }, [quiz]);
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [quiz?.currentQuestionEndsAt, quiz?.currentQuestionIndex]);
 
   // ---------------- CURRENT QUESTION ----------------
   const currentQuestion =
@@ -111,10 +125,8 @@ const ParticipantLive = () => {
       !currentQuestion ||
       status !== 'in-progress' ||
       remainingSeconds === 0 ||
-      submittedQuestionId === currentQuestion.id ||
-      submittedOption !== null ||
-      isSubmitting ||
-      submitLockRef.current
+      submitLockRef.current ||
+      isSubmitting
     ) {
       return;
     }
@@ -124,21 +136,17 @@ const ParticipantLive = () => {
 
   // ---------------- SUBMIT ANSWER ----------------
   const handleSubmit = () => {
-    // HARD BLOCK
     if (submitLockRef.current) return;
 
     if (
       !currentQuestion ||
       status !== 'in-progress' ||
       remainingSeconds === 0 ||
-      selectedOption === null ||
-      submittedQuestionId === currentQuestion.id ||
-      submittedOption !== null
+      selectedOption === null
     ) {
       return;
     }
 
-    // LOCK instantly
     submitLockRef.current = true;
     setIsSubmitting(true);
 
@@ -174,7 +182,8 @@ const ParticipantLive = () => {
             )}
 
             {status === 'in-progress' && currentQuestion && (
-              <div className="question-live">
+              // ⭐ animation class added
+              <div className={`question-live ${animateQuestion ? 'question-enter' : ''}`}>
                 <div className="question-meta">
                   <span>
                     Question {currentIndex + 1} of {quiz.questions.length}
@@ -218,12 +227,7 @@ const ParticipantLive = () => {
                         type="button"
                         className={optionClass}
                         onClick={() => handleSelect(idx)}
-                        disabled={
-                          isSubmitted ||
-                          submittedOption !== null ||
-                          isSubmitting ||
-                          submitLockRef.current
-                        }
+                        disabled={submitLockRef.current || isSubmitting}
                       >
                         <span className="option-index">
                           {String.fromCharCode(65 + idx)}
@@ -250,18 +254,12 @@ const ParticipantLive = () => {
                     className="btn btn-primary"
                     onClick={handleSubmit}
                     disabled={
-                      status !== 'in-progress' ||
-                      remainingSeconds === 0 ||
                       selectedOption === null ||
-                      submittedQuestionId === currentQuestion.id ||
-                      submittedOption !== null ||
-                      isSubmitting ||
-                      submitLockRef.current
+                      submitLockRef.current ||
+                      remainingSeconds === 0
                     }
                   >
-                    {submittedQuestionId === currentQuestion.id
-                      ? "Submitted ✔"
-                      : "Submit answer"}
+                    {submitLockRef.current ? "Submitted ✔" : "Submit answer"}
                   </button>
                 </div>
               </div>

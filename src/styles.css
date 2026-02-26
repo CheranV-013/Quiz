@@ -801,3 +801,24 @@ input[type='text']:focus {
   border: 2px solid #15803d !important;
   color: white !important;
 }
+
+/* ⭐ Smooth question transition */
+
+.question-live {
+  transition: all 0.35s ease;
+}
+
+.question-enter {
+  animation: questionFade 0.35s ease;
+}
+
+@keyframes questionFade {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
