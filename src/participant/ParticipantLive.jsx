@@ -20,6 +20,9 @@ const ParticipantLive = () => {
   /* ⭐ lock submit per question */
   const [submittedQuestionId, setSubmittedQuestionId] = useState(null);
 
+  /* ⭐ NEW: prevent double click spam */
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // ---------------- SOCKET CONNECTION ----------------
   useEffect(() => {
     if (!socket || !quizId || !participantId) return;
@@ -61,6 +64,7 @@ const ParticipantLive = () => {
       setSelectedOption(null);
       setSubmittedOption(null);
       setSubmittedQuestionId(null);
+      setIsSubmitting(false);
     }
   };
 
@@ -96,7 +100,8 @@ const ParticipantLive = () => {
       status !== 'in-progress' ||
       remainingSeconds === 0 ||
       submittedQuestionId === currentQuestion.id ||
-      submittedOption !== null
+      submittedOption !== null ||
+      isSubmitting
     ) {
       return;
     }
@@ -112,10 +117,13 @@ const ParticipantLive = () => {
       remainingSeconds === 0 ||
       selectedOption === null ||
       submittedQuestionId === currentQuestion.id ||
-      submittedOption !== null
+      submittedOption !== null ||
+      isSubmitting
     ) {
       return;
     }
+
+    setIsSubmitting(true); // ⭐ lock instantly
 
     socket.emit('participant:answer', {
       quizId,
@@ -125,7 +133,7 @@ const ParticipantLive = () => {
     });
 
     setSubmittedOption(selectedOption);
-    setSubmittedQuestionId(currentQuestion.id); // lock submit
+    setSubmittedQuestionId(currentQuestion.id);
   };
 
   return (
@@ -193,7 +201,7 @@ const ParticipantLive = () => {
                         type="button"
                         className={optionClass}
                         onClick={() => handleSelect(idx)}
-                        disabled={isSubmitted || submittedOption !== null}
+                        disabled={isSubmitted || submittedOption !== null || isSubmitting}
                       >
                         <span className="option-index">
                           {String.fromCharCode(65 + idx)}
@@ -206,13 +214,7 @@ const ParticipantLive = () => {
                   })}
                 </div>
 
-                <div
-                  style={{
-                    marginTop: '0.75rem',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}
-                >
+                <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center' }}>
                   <span className="muted" style={{ fontSize: '0.8rem' }}>
                     {selectedOption === null
                       ? 'Select an option, then submit.'
@@ -230,7 +232,8 @@ const ParticipantLive = () => {
                       remainingSeconds === 0 ||
                       selectedOption === null ||
                       submittedQuestionId === currentQuestion.id ||
-                      submittedOption !== null
+                      submittedOption !== null ||
+                      isSubmitting
                     }
                   >
                     {submittedQuestionId === currentQuestion.id
@@ -256,10 +259,7 @@ const ParticipantLive = () => {
             <h3>Live leaderboard</h3>
           </div>
           <div className="panel-body">
-            <Leaderboard
-              participants={participants}
-              highlightId={participantId}
-            />
+            <Leaderboard participants={participants} highlightId={participantId} />
           </div>
         </div>
       </aside>
