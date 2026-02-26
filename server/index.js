@@ -48,7 +48,6 @@ io.on('connection', (socket) => {
       title: payload.title,
       questions: payload.questions.map((q) => ({
         ...q,
-        // Ensure we have an id for each question
         id: q.id || randomUUID()
       })),
       status: 'lobby',
@@ -175,7 +174,6 @@ io.on('connection', (socket) => {
 
     const now = Date.now();
     if (quiz.currentQuestionEndsAt && now > quiz.currentQuestionEndsAt) {
-      // Too late for this question.
       return;
     }
 
@@ -185,6 +183,9 @@ io.on('connection', (socket) => {
 
     const question = quiz.questions[quiz.currentQuestionIndex];
     if (!question || question.id !== questionId) return;
+
+    // ⭐ PREVENT MULTIPLE SUBMISSIONS (ADDED)
+    if (participant.answers && questionId in participant.answers) return;
 
     participant.answers[questionId] = optionIndex;
 
@@ -200,7 +201,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
-  // eslint-disable-next-line no-console
   console.log(`Quizzz realtime server listening on :${PORT}`);
 });
-
