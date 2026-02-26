@@ -21,14 +21,17 @@ body {
 
 
 .app-header {
-  background: rgba(0, 0, 0, 0.9);
+  background: linear-gradient(
+    to right,
+    rgba(20, 14, 6, 0.95),
+    rgba(35, 24, 10, 0.85)
+  );
 }
 
 .panel,
 .app-footer {
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(20, 14, 6, 0.9);
 }
-
 
 
 a {
