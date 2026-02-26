@@ -15,8 +15,8 @@ const io = new Server(server, {
   }
 });
 
-const quizzes = new Map(); // quizId -> { id, code, title, questions, status, currentQuestionIndex, currentQuestionEndsAt }
-const quizParticipants = new Map(); // quizId -> Map<socketIdOrId, participant>
+const quizzes = new Map();
+const quizParticipants = new Map();
 
 const generateQuizCode = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -29,15 +29,16 @@ const generateQuizCode = () => {
 
 const createQuizStatePayload = (quizId) => {
   const quiz = quizzes.get(quizId);
-  const participants = Array.from(quizParticipants.get(quizId)?.values() || []);
+  const participants = Array.from(
+    quizParticipants.get(quizId)?.values() || []
+  );
   return { quiz, participants };
 };
 
 io.on('connection', (socket) => {
-  socket.on('disconnecting', () => {
-    // We keep scores even if they disconnect mid-quiz; nothing to do here for now.
-  });
+  socket.on('disconnecting', () => {});
 
+  // ---------------- HOST CREATE ----------------
   socket.on('host:createQuiz', (payload, cb) => {
     const quizId = randomUUID();
     const code = generateQuizCode();
@@ -59,10 +60,10 @@ io.on('connection', (socket) => {
     quizParticipants.set(quizId, new Map());
 
     socket.join(quizId);
-
     cb?.({ quizId, code });
   });
 
+  // ---------------- HOST JOIN ----------------
   socket.on('host:joinQuiz', ({ quizId }, cb) => {
     const quiz = quizzes.get(quizId);
     if (!quiz) {
@@ -73,6 +74,7 @@ io.on('connection', (socket) => {
     cb?.({ state: createQuizStatePayload(quizId) });
   });
 
+  // ---------------- START QUIZ ----------------
   socket.on('host:startQuiz', ({ quizId }) => {
     const quiz = quizzes.get(quizId);
     if (!quiz) return;
@@ -83,11 +85,12 @@ io.on('connection', (socket) => {
     quiz.status = 'in-progress';
     quiz.currentQuestionIndex = 0;
     quiz.currentQuestionEndsAt = now + 45_000;
-    quizzes.set(quizId, quiz);
 
+    quizzes.set(quizId, quiz);
     io.to(quizId).emit('quiz:state', createQuizStatePayload(quizId));
   });
 
+  // ---------------- NEXT QUESTION ----------------
   socket.on('host:nextQuestion', ({ quizId }) => {
     const quiz = quizzes.get(quizId);
     if (!quiz || quiz.status !== 'in-progress') return;
@@ -96,10 +99,20 @@ io.on('connection', (socket) => {
     const now = Date.now();
     quiz.currentQuestionIndex += 1;
     quiz.currentQuestionEndsAt = now + 45_000;
+
+    // ⭐ FIX: ensure participants ready for next question
+    const pMap = quizParticipants.get(quizId);
+    if (pMap) {
+      pMap.forEach((p) => {
+        p.answers = p.answers || {};
+      });
+    }
+
     quizzes.set(quizId, quiz);
     io.to(quizId).emit('quiz:state', createQuizStatePayload(quizId));
   });
 
+  // ---------------- PREVIOUS QUESTION ----------------
   socket.on('host:prevQuestion', ({ quizId }) => {
     const quiz = quizzes.get(quizId);
     if (!quiz || quiz.status !== 'in-progress') return;
@@ -108,23 +121,29 @@ io.on('connection', (socket) => {
     const now = Date.now();
     quiz.currentQuestionIndex -= 1;
     quiz.currentQuestionEndsAt = now + 45_000;
+
     quizzes.set(quizId, quiz);
     io.to(quizId).emit('quiz:state', createQuizStatePayload(quizId));
   });
 
+  // ---------------- END QUIZ ----------------
   socket.on('host:endQuiz', ({ quizId }) => {
     const quiz = quizzes.get(quizId);
     if (!quiz) return;
+
     quiz.status = 'finished';
     quiz.currentQuestionEndsAt = null;
+
     quizzes.set(quizId, quiz);
     io.to(quizId).emit('quiz:state', createQuizStatePayload(quizId));
   });
 
+  // ---------------- PARTICIPANT JOIN ----------------
   socket.on('participant:join', ({ code, name }, cb) => {
     const entry = Array.from(quizzes.values()).find(
       (q) => q.code === code && q.status !== 'finished'
     );
+
     if (!entry) {
       cb?.({ error: 'Quiz not found or already finished.' });
       return;
@@ -132,6 +151,7 @@ io.on('connection', (socket) => {
 
     const quizId = entry.id;
     const pid = randomUUID();
+
     const participant = {
       id: pid,
       socketId: socket.id,
@@ -146,60 +166,68 @@ io.on('connection', (socket) => {
     socket.join(quizId);
 
     io.to(quizId).emit('quiz:state', createQuizStatePayload(quizId));
-
     cb?.({ quizId, participantId: pid });
   });
 
+  // ---------------- PARTICIPANT REJOIN ----------------
   socket.on('participant:rejoin', ({ quizId, participantId }, cb) => {
     const quiz = quizzes.get(quizId);
     if (!quiz) {
       cb?.({ error: 'Quiz not found.' });
       return;
     }
+
     const pMap = quizParticipants.get(quizId);
     const participant = pMap?.get(participantId);
     if (!participant) {
       cb?.({ error: 'Participant not found.' });
       return;
     }
+
     participant.socketId = socket.id;
     pMap.set(participantId, participant);
+
     socket.join(quizId);
     cb?.({ state: createQuizStatePayload(quizId) });
   });
 
-  socket.on('participant:answer', ({ quizId, participantId, questionId, optionIndex }) => {
-    const quiz = quizzes.get(quizId);
-    if (!quiz || quiz.status !== 'in-progress') return;
+  // ---------------- PARTICIPANT ANSWER ----------------
+  socket.on(
+    'participant:answer',
+    ({ quizId, participantId, questionId, optionIndex }) => {
+      const quiz = quizzes.get(quizId);
+      if (!quiz || quiz.status !== 'in-progress') return;
 
-    const now = Date.now();
-    if (quiz.currentQuestionEndsAt && now > quiz.currentQuestionEndsAt) {
-      return;
+      const now = Date.now();
+      if (quiz.currentQuestionEndsAt && now > quiz.currentQuestionEndsAt) {
+        return;
+      }
+
+      const pMap = quizParticipants.get(quizId);
+      const participant = pMap?.get(participantId);
+      if (!participant) return;
+
+      const question = quiz.questions[quiz.currentQuestionIndex];
+      if (!question || question.id !== questionId) return;
+
+      // ⭐ FIX: prevent multiple submissions
+      if (participant.answers?.[questionId] !== undefined) return;
+
+      participant.answers[questionId] = optionIndex;
+
+      if (optionIndex === question.correctIndex) {
+        participant.score += 10;
+      }
+
+      pMap.set(participantId, participant);
+
+      io.to(quizId).emit('quiz:state', createQuizStatePayload(quizId));
     }
-
-    const pMap = quizParticipants.get(quizId);
-    const participant = pMap?.get(participantId);
-    if (!participant) return;
-
-    const question = quiz.questions[quiz.currentQuestionIndex];
-    if (!question || question.id !== questionId) return;
-
-    // ⭐ PREVENT MULTIPLE SUBMISSIONS (ADDED)
-    if (participant.answers && questionId in participant.answers) return;
-
-    participant.answers[questionId] = optionIndex;
-
-    if (optionIndex === question.correctIndex) {
-      participant.score += 10;
-    }
-
-    pMap.set(participantId, participant);
-
-    io.to(quizId).emit('quiz:state', createQuizStatePayload(quizId));
-  });
+  );
 });
 
 const PORT = process.env.PORT || 4000;
+
 server.listen(PORT, () => {
   console.log(`Quizzz realtime server listening on :${PORT}`);
 });
