@@ -103,19 +103,22 @@ const ParticipantLive = () => {
   const handleSubmit = () => {
     if (
       !currentQuestion ||
-      status !== 'in-progress' ||
+      status !== "in-progress" ||
       remainingSeconds === 0 ||
       selectedOption === null ||
       submittedOption !== null
     ) {
       return;
     }
-
-    socket.emit('participant:answer', {
+    
+    
+    
+    socket.emit("participant:answer", {
       quizId,
       participantId,
       questionId: currentQuestion.id,
-      optionIndex: selectedOption
+      optionIndex: selectedOption,
+      submittedAt: Date.now() // optional but recommended
     });
 
     setSubmittedOption(selectedOption);
