@@ -14,9 +14,22 @@ body,
 
 body {
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: radial-gradient(circle at top left, #1f2937, #020617 55%);
+  background: #000; /* pure black */
+  color: #f9fafb;
   color: #f9fafb;
 }
+
+
+.app-header {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.panel,
+.app-footer {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+
 
 a {
   color: inherit;
@@ -132,10 +145,11 @@ button {
 }
 
 .landing {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 3rem;
+  display: flex;
+  flex-direction: column; /* IMAGE TOP, CONTENT BELOW */
+  gap: 2rem;
   align-items: center;
+  text-align: center;
 }
 
 .landing-left h1 {
@@ -158,7 +172,19 @@ button {
 .landing-right {
   display: flex;
   justify-content: flex-end;
+  order: -1; /* move image above content */
+  justify-content: center;
+  width: 100%;
 }
+
+.landing-image {
+  width: 100%;
+  max-width: 650px;
+  height: auto;
+  border-radius: 16px;
+  display: block;
+}
+
 
 .landing-card {
   width: 100%;
