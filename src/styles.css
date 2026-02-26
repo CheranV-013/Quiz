@@ -22,15 +22,16 @@ body {
 
 .app-header {
   background: linear-gradient(
-    to right,
-    rgba(20, 14, 6, 0.95),
-    rgba(35, 24, 10, 0.85)
-  );
+  to right,
+  rgba(20, 14, 6, 0.95),
+  rgba(35, 24, 10, 0.85)
+);
 }
 
-.panel,
 .app-footer {
-  background: rgba(20, 14, 6, 0.9);
+  b.app-footer {
+    background: rgba(20, 14, 6, 0.9);
+  }
 }
 
 
