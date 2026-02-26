@@ -47,7 +47,7 @@ const Landing = () => {
   
       {/* LEFT SIDE */}
       <div className="landing-left">
-        <h1>ROUND 1 OF tech fusion quiz</h1>
+        <h1>ROUND 1 OF TECH FUSION QUIZ</h1>
         <p>
           Run interactive sessions where you control the flow of each question,
           see answers live, and share a beautiful leaderboard at the end.
