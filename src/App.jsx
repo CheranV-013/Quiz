@@ -49,8 +49,8 @@ const Landing = () => {
       <div className="landing-left">
         <h1>ROUND 1 OF TECH FUSION QUIZ</h1>
         <p>
-          Run interactive sessions where you control the flow of each question,
-          see answers live, and share a beautiful leaderboard at the end.
+          Department of<br/>
+          Artificial Intelligence and Machine Learning
         </p>
         <div className="landing-actions">
           <button className="btn btn-primary" onClick={() => navigate('/host')}>
