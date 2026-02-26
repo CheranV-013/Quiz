@@ -895,67 +895,43 @@ input[type='text']:focus {
 }
 
 
-/* ================= DARK BACKGROUND ================= */
+/* ================= DARK BASE ================= */
 
 body {
   margin: 0;
   min-height: 100vh;
   overflow-x: hidden;
-  background: linear-gradient(
-    -45deg,
-    #000000,
-    #050505,
-    #0a0a0a,
-    #000000
-  );
-  background-size: 300% 300%;
-  animation: bgMove 9s ease infinite; /* little faster */
+  background: #050505;
+  position: relative;
 }
 
-/* subtle movement */
-@keyframes bgMove {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
+/* ================= MOVING SLANT LINES ================= */
 
-/* ================= GOLDEN LIGHT ACCENTS ================= */
-
-body::before,
-body::after {
+body::before {
   content: "";
   position: fixed;
-  width: 380px;
-  height: 380px;
-  border-radius: 50%;
-  filter: blur(120px);
+  inset: -200%;
   z-index: -1;
   pointer-events: none;
+
+  /* diagonal line pattern */
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(255, 200, 120, 0.06) 0px,
+    rgba(255, 200, 120, 0.06) 2px,
+    transparent 2px,
+    transparent 40px
+  );
+
+  animation: slantMove 8s linear infinite;
 }
 
-/* top-left soft glow */
-body::before {
-  background: rgba(255, 170, 60, 0.12);
-  top: -120px;
-  left: -120px;
-  animation: goldMove1 8s ease-in-out infinite;
+/* movement direction: top-left → bottom-right */
+@keyframes slantMove {
+  0% {
+    transform: translate(-150px, -150px);
+  }
+  100% {
+    transform: translate(150px, 150px);
+  }
 }
-
-/* bottom-right glow */
-body::after {
-  background: rgba(200, 130, 40, 0.10);
-  bottom: -140px;
-  right: -140px;
-  animation: goldMove2 10s ease-in-out infinite;
-}
-
-@keyframes goldMove1 {
-  0%,100% { transform: translate(0,0); }
-  50% { transform: translate(80px,60px); }
-}
-
-@keyframes goldMove2 {
-  0%,100% { transform: translate(0,0); }
-  50% { transform: translate(-80px,-60px); }
-}
-
